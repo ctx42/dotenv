@@ -1,26 +1,26 @@
+# dotenv: Parse .env files for Go
+i
 [![Go Report Card](https://goreportcard.com/badge/github.com/ctx42/dotenv)](https://goreportcard.com/report/github.com/ctx42/dotenv)
 [![GoDoc](https://img.shields.io/badge/api-Godoc-blue.svg)](https://pkg.go.dev/github.com/ctx42/dotenv)
 ![Tests](https://github.com/ctx42/dotenv/actions/workflows/go.yml/badge.svg?branch=master)
 
 <!-- TOC -->
-* [dotenv](#dotenv)
-* [Installation](#installation)
-* [Usage](#usage)
-  * [Basic](#basic)
-  * [Comments](#comments)
-  * [Variable Expansion](#variable-expansion)
-  * [Preventing Expansion](#preventing-expansion)
-  * [Escape Characters](#escape-characters)
-* [Disclaimer](#disclaimer)
+* [dotenv: Parse .env files for Go](#dotenv-parse-env-files-for-go)
+  * [Installation](#installation)
+  * [Usage](#usage)
+    * [Basic](#basic)
+    * [Comments](#comments)
+    * [Variable Expansion](#variable-expansion)
+    * [Preventing Expansion](#preventing-expansion)
+    * [Escape Characters](#escape-characters)
+  * [Disclaimer](#disclaimer)
 <!-- TOC -->
-
-# dotenv
 
 Dotenv files, typically named .env, store configuration settings as key-value 
 pairs. This format originates from shell scripts used to set environment
 variables.
 
-# Installation
+## Installation
 
 To use `dotenv` in your Go project, install it with:
 
@@ -28,7 +28,7 @@ To use `dotenv` in your Go project, install it with:
 go get github.com/ctx42/dotenv
 ```
 
-# Usage
+## Usage
 
 The library offers a single function, Parse, which reads dotenv-formatted
 content from a reader and stores it in a key-value map.
@@ -37,7 +37,7 @@ content from a reader and stores it in a key-value map.
 func Parse(m map[string]string, r io.Reader) error
 ```
 
-## Basic
+### Basic
 
 ```go
 file := `
@@ -95,7 +95,7 @@ EXPAND="multiple\nlines text with variable expansion: ${SIMPLE}"
 DO_NOT_EXPAND='raw text without variable interpolation'
 ```
 
-## Comments
+### Comments
 
 Lines starting with `#` are treated as comments. Comments can also appear after
 a value if separated by a space but only outside quotes. Within quoted strings,
@@ -123,7 +123,7 @@ fmt.Println(dump.Any(m))
 // }
 ```
 
-## Variable Expansion
+### Variable Expansion
 
 Unquoted or double-quoted values support placeholders like `${VAR_NAME}`, which 
 are replaced with the values of previously defined variables in the file.
@@ -184,7 +184,7 @@ fmt.Println(dump.Any(env))
 
 Note that keys from the reader overwrite keys in the initialized map.
 
-## Preventing Expansion
+### Preventing Expansion
 
 To preserve placeholders like `${}` in a value, enclose it in single quotes:
 
@@ -192,7 +192,7 @@ To preserve placeholders like `${}` in a value, enclose it in single quotes:
 SECURE_PASS='complex$%{pass}word'
 ```
 
-## Escape Characters
+### Escape Characters
 
 Certain backslash sequences are replaced with special characters during parsing,
 similar to shell script behavior. Files are read as UTF-8, converting specific 
@@ -211,7 +211,7 @@ byte pairs into single characters:
 If a backslash precedes any other character, the backslash is removed, and the
 character is retained as is.
 
-# Disclaimer
+## Disclaimer
 
 This project is a heavily customized version derived from the original godotenv
 library found at [godotenv](https://github.com/joho/godotenv).
