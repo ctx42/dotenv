@@ -81,6 +81,7 @@ WORLD=world
 MESSAGE="${HELLO} ${WORLD}${EXCLAIM}"
 `
 
+	// nolint: gocritic
 	// env := dotenv.Split(os.Environ())
 	// or
 	env := map[string]string{
