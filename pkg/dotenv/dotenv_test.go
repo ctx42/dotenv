@@ -183,11 +183,11 @@ func Test_Parse(t *testing.T) {
 
 func Test_parseLine_interpolation(t *testing.T) {
 	tt := []struct {
-		testN   string
-		line    string
-		with    map[string]string
-		wantKey string
-		wantVal string
+		testN string
+		line  string
+		with  map[string]string
+		wKey  string
+		wVal  string
 	}{
 		{
 			"expands variables found in values",
@@ -248,16 +248,14 @@ func Test_parseLine_interpolation(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		tc := tc
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- When ---
-			haveKey, haveVal, err := parseLine(123, tc.line, tc.with)
-			_, _ = haveKey, haveVal
+			hKey, hVal, err := parseLine(123, tc.line, tc.with)
 
 			// --- Then ---
 			assert.NoError(t, err)
-			assert.Equal(t, tc.wantKey, haveKey)
-			assert.Equal(t, tc.wantVal, haveVal)
+			assert.Equal(t, tc.wKey, hKey)
+			assert.Equal(t, tc.wVal, hVal)
 		})
 	}
 }
@@ -266,9 +264,9 @@ func Test_parseLine(t *testing.T) {
 	tt := []struct {
 		testN string
 
-		lin     string
-		wantKey string
-		wantVal string
+		lin  string
+		wKey string
+		wVal string
 	}{
 		{"key value", "FOO=bar", "FOO", "bar"},
 		{"space after the key", "FOO =bar", "FOO", "bar"},
@@ -365,18 +363,18 @@ func Test_parseLine(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		tc := tc
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- Given ---
 			m := make(map[string]string)
 
 			// --- When ---
-			haveKey, haveVal, err := parseLine(0, tc.lin, m)
+			hKey, hVal, err := parseLine(0, tc.lin, m)
 
 			// --- Then ---
 			assert.NoError(t, err)
-			assert.Equal(t, tc.wantKey, haveKey)
-			assert.Equal(t, tc.wantVal, haveVal)
+			assert.Equal(t, tc.wKey, hKey)
+			assert.Equal(t, tc.wVal, hVal)
+			assert.Len(t, 0, m)
 		})
 	}
 }
@@ -393,7 +391,6 @@ func Test_parseLine_error(t *testing.T) {
 	}
 
 	for n, tc := range tt {
-		tc := tc
 		n := n
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- Given ---
@@ -480,7 +477,6 @@ func Test_expandVariables_tabular(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		tc := tc
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- When ---
 			have := expandVariables(tc.input, tc.with)
@@ -507,7 +503,6 @@ func Test_isIgnoredLine(t *testing.T) {
 	}
 
 	for _, tc := range tt {
-		tc := tc
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- When ---
 			have := isIgnoredLine(tc.lin)

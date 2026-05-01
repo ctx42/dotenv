@@ -1,5 +1,5 @@
 module github.com/ctx42/dotenv
 
-go 1.24.0
+go 1.26
 
-require github.com/ctx42/testing v0.42.0 // indirect
+require github.com/ctx42/testing v0.47.0
