@@ -1,3 +1,6 @@
+## v0.4.0 (Sun, 07 Jun 2026 20:28:47 UTC)
+- chore: update dependency ctx42/testing to v0.51.0.
+
 ## v0.3.0 (Sun, 07 Jun 2026 20:28:06 UTC)
 - docs: use gmdoceg task for README.md examples.
 - docs: clarify godotenv attribution and add missing copyright.
