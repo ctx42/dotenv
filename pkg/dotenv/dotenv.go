@@ -18,9 +18,6 @@ import (
 var ErrInvLine = errors.New("invalid config line")
 
 var (
-	exportRX        = regexp.MustCompile(`^\s*(?:export\s+)?(.*?)\s*$`)
-	singleQuotesRX  = regexp.MustCompile(`\A'(.*)'\z`)
-	doubleQuotesRX  = regexp.MustCompile(`\A"(.*)"\z`)
 	escapeRX        = regexp.MustCompile(`\\.`)
 	unescapeCharsRX = regexp.MustCompile(`\\([^$])`)
 	// Uppercase-only by convention: .env files use SCREAMING_SNAKE_CASE keys.
@@ -57,49 +54,22 @@ func parseLine(n int, lin string, m map[string]string) (string, string, error) {
 		return "", "", fmt.Errorf("%w: %d", ErrInvLine, n)
 	}
 
-	// Strip trailing comments while preserving # inside quoted values.
-	// Strategy: split on # and walk segments, tracking whether a quote
-	// is open (an odd count of " or ' in a segment toggles the state).
-	// Segments before the first unquoted # (and any inside quotes) are kept.
-	if strings.Contains(lin, "#") {
-		segmentsBetweenHashes := strings.Split(lin, "#")
-		quotesAreOpen := false
-		var segmentsToKeep []string
-		for _, seg := range segmentsBetweenHashes {
-			if strings.Count(seg, "\"") == 1 || strings.Count(seg, "'") == 1 {
-				if quotesAreOpen {
-					quotesAreOpen = false
-					segmentsToKeep = append(segmentsToKeep, seg)
-				} else {
-					quotesAreOpen = true
-				}
-			}
-
-			if len(segmentsToKeep) == 0 || quotesAreOpen {
-				segmentsToKeep = append(segmentsToKeep, seg)
-			}
-		}
-
-		lin = strings.Join(segmentsToKeep, "#")
-	}
+	lin = stripComment(lin)
 
 	firstEquals := strings.Index(lin, "=")
 	firstColon := strings.Index(lin, ":")
-	splitString := strings.SplitN(lin, "=", 2)
-	if firstColon != -1 && (firstColon < firstEquals || firstEquals == -1) {
-		// This is a yaml-style line.
-		splitString = strings.SplitN(lin, ":", 2)
-	}
 
-	if len(splitString) != 2 {
+	var sepIdx int
+	if firstColon != -1 && (firstColon < firstEquals || firstEquals == -1) {
+		sepIdx = firstColon
+	} else if firstEquals != -1 {
+		sepIdx = firstEquals
+	} else {
 		return "", "", fmt.Errorf("%w: %d", ErrInvLine, n)
 	}
 
-	// Parse the key
-	key := exportRX.ReplaceAllString(splitString[0], "$1")
-
-	// Parse the value
-	val := parseValue(splitString[1], m)
+	key := extractKey(lin[:sepIdx])
+	val := parseValue(lin[sepIdx+1:], m)
 	return key, val, nil
 }
 
@@ -112,13 +82,14 @@ func parseValue(val string, m map[string]string) string {
 		return val
 	}
 
-	singleQuotes := singleQuotesRX.FindStringSubmatch(val)
-	doubleQuotes := doubleQuotesRX.FindStringSubmatch(val)
-	if singleQuotes != nil || doubleQuotes != nil {
-		val = val[1 : len(val)-1] // Pull the quotes off the edges.
+	first, last := val[0], val[len(val)-1]
+	isSingle := first == '\'' && last == '\''
+	isDouble := first == '"' && last == '"'
+	if isSingle || isDouble {
+		val = val[1 : len(val)-1]
 	}
 
-	if doubleQuotes != nil {
+	if isDouble {
 		// Expand newlines.
 		val = escapeRX.ReplaceAllStringFunc(val, func(match string) string {
 			c := strings.TrimPrefix(match, `\`)
@@ -135,7 +106,7 @@ func parseValue(val string, m map[string]string) string {
 		val = unescapeCharsRX.ReplaceAllString(val, "$1")
 	}
 
-	if singleQuotes == nil {
+	if !isSingle && strings.Contains(val, "$") {
 		val = expandVariables(val, m)
 	}
 
@@ -167,4 +138,41 @@ func expandVariables(src string, m map[string]string) string {
 func isIgnoredLine(lin string) bool {
 	lin = strings.TrimSpace(lin)
 	return lin == "" || strings.HasPrefix(lin, "#")
+}
+
+// extractKey strips leading/trailing whitespace and the optional
+// "export" keyword prefix from a key string.
+func extractKey(s string) string {
+	s = strings.TrimSpace(s)
+	if len(s) > 6 && s[:6] == "export" {
+		c := s[6]
+		if c == ' ' || c == '\t' {
+			return strings.TrimLeft(s[7:], " \t")
+		}
+	}
+	return s
+}
+
+// stripComment removes an inline comment from a line, preserving
+// '#' characters inside quoted strings.
+func stripComment(lin string) string {
+	inSingle := false
+	inDouble := false
+	for i := 0; i < len(lin); i++ {
+		switch lin[i] {
+		case '\'':
+			if !inDouble {
+				inSingle = !inSingle
+			}
+		case '"':
+			if !inSingle {
+				inDouble = !inDouble
+			}
+		case '#':
+			if !inSingle && !inDouble {
+				return strings.TrimRight(lin[:i], " \t")
+			}
+		}
+	}
+	return lin
 }

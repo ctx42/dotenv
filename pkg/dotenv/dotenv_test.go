@@ -504,6 +504,120 @@ func Test_expandVariables_tabular(t *testing.T) {
 	}
 }
 
+func Test_extractKey_tabular(t *testing.T) {
+	tt := []struct {
+		testN string
+
+		inp  string
+		want string
+	}{
+		{"bare key", "FOO", "FOO"},
+		{"leading space", "  FOO", "FOO"},
+		{"trailing space", "FOO  ", "FOO"},
+		{"leading and trailing space", "  FOO  ", "FOO"},
+		{"leading tab", "\tFOO", "FOO"},
+		{"trailing tab", "FOO\t", "FOO"},
+		{"key with space before equals", "FOO ", "FOO"},
+		{"empty string", "", ""},
+		{"whitespace only", "   ", ""},
+		{"export with space", "export FOO", "FOO"},
+		{"export with tab", "export\tFOO", "FOO"},
+		{"export with multiple spaces", "export  FOO", "FOO"},
+		{"export with multiple tabs", "export\t\tFOO", "FOO"},
+		{"export with leading space", "  export FOO", "FOO"},
+		{"export with leading tab", "\texport FOO", "FOO"},
+		{"export camel case key", "export exportFoo", "exportFoo"},
+		{"export alone", "export", "export"},
+		{"export no separator", "exportFOO", "exportFOO"},
+		{"export underscore prefix", "export_FOO", "export_FOO"},
+		{"export period prefix", "export.FOO", "export.FOO"},
+		{"export digit prefix", "export1FOO", "export1FOO"},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			have := extractKey(tc.inp)
+
+			// --- Then ---
+			assert.Equal(t, tc.want, have)
+		})
+	}
+}
+
+func Test_stripComment_tabular(t *testing.T) {
+	tt := []struct {
+		testN string
+
+		lin  string
+		want string
+	}{
+		{"empty string", "", ""},
+		{"no hash", "FOO=bar", "FOO=bar"},
+		{"inline comment", "FOO=bar # comment", "FOO=bar"},
+		{"inline comment no space before hash", "FOO=bar# comment", "FOO=bar"},
+		{"inline comment no space or text after hash", "FOO=bar#", "FOO=bar"},
+		{"multiple spaces before hash", "FOO=bar   # comment", "FOO=bar"},
+		{"tab before hash", "FOO=bar\t# comment", "FOO=bar"},
+		{"multiple hashes unquoted", "FOO=bar # this # is foo", "FOO=bar"},
+		{"comment only", "# comment", ""},
+		{"hash only", "#", ""},
+		{"hash at start no space", "#comment", ""},
+		{"hash in double-quoted value", `FOO="bar#baz"`, `FOO="bar#baz"`},
+		{"hash in single-quoted value", "FOO='bar#baz'", "FOO='bar#baz'"},
+		{
+			"hash after double-quoted with comment",
+			`FOO="bar" # comment`,
+			`FOO="bar"`,
+		},
+		{
+			"hash after single-quoted with comment",
+			"FOO='bar' # comment",
+			"FOO='bar'",
+		},
+		{
+			"multiple hashes in double-quoted",
+			`FOO="bar#baz#bang" # comment`,
+			`FOO="bar#baz#bang"`,
+		},
+		{
+			"multiple hashes in single-quoted",
+			"FOO='bar#baz#bang' # comment",
+			"FOO='bar#baz#bang'",
+		},
+		{
+			"single quote inside double-quoted with hash",
+			`FOO="bar'#'baz" # comment`,
+			`FOO="bar'#'baz"`,
+		},
+		{
+			"double quote inside single-quoted with hash",
+			"FOO='bar\"#\"baz' # comment",
+			"FOO='bar\"#\"baz'",
+		},
+		{
+			"empty double-quoted value with comment",
+			`FOO="" # comment`,
+			`FOO=""`,
+		},
+		{
+			"empty single-quoted value with comment",
+			"FOO='' # comment",
+			"FOO=''",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			have := stripComment(tc.lin)
+
+			// --- Then ---
+			assert.Equal(t, tc.want, have)
+		})
+	}
+}
+
 func Test_isIgnoredLine(t *testing.T) {
 	tt := []struct {
 		testN string
