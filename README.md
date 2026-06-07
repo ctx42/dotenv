@@ -1,5 +1,5 @@
 # dotenv: Parse .env files for Go
-i
+
 [![Go Report Card](https://goreportcard.com/badge/github.com/ctx42/dotenv)](https://goreportcard.com/report/github.com/ctx42/dotenv)
 [![GoDoc](https://img.shields.io/badge/api-Godoc-blue.svg)](https://pkg.go.dev/github.com/ctx42/dotenv)
 ![Tests](https://github.com/ctx42/dotenv/actions/workflows/go.yml/badge.svg?branch=master)
@@ -17,7 +17,7 @@ i
   * [Disclaimer](#disclaimer)
 <!-- TOC -->
 
-Dotenv files, typically named .env, store configuration settings as key-value 
+Dotenv files, typically named .env, store configuration settings as key-value
 pairs. This format originates from shell scripts used to set environment
 variables.
 
@@ -79,10 +79,10 @@ expression:
 ```
 
 ```
-FOOBAR   # ok  
-FOO_BAR  # ok  
-foobar   # ok  
-foo_bar  # ok  
+FOOBAR   # ok
+FOO_BAR  # ok
+foobar   # ok
+foo_bar  # ok
 foo-bar  # invalid
 ∑KEY     # invalid
 123VAR   # invalid
@@ -107,7 +107,7 @@ a value if separated by a space but only outside quotes. Within quoted strings,
 ```go
 file := `
 # Comment.
-QUOTED="a # b # c #" 
+QUOTED="a # b # c #"
 AFTER_SPACE=world # Comment.
 `
 
@@ -128,7 +128,7 @@ fmt.Println(dump.Any(m))
 
 ### Variable Expansion
 
-Unquoted or double-quoted values support placeholders like `${VAR_NAME}`, which 
+Unquoted or double-quoted values support placeholders like `${VAR_NAME}`, which
 are replaced with the values of previously defined variables in the file.
 **Environment variables are not expanded.**
 
@@ -137,7 +137,7 @@ For instance:
 <!-- gmdoceg:ExampleParse_variableExpansion -->
 ```go
 file := `
-HELLO=hello 
+HELLO=hello
 WORLD=world
 MESSAGE="${HELLO} ${WORLD}!"
 `
@@ -154,13 +154,13 @@ fmt.Println(m["MESSAGE"])
 // hello world!
 ```
 
-To expand environment variables, provide an initialized map with the keys to 
+To expand environment variables, provide an initialized map with the keys to
 expand.
 
 <!-- gmdoceg:ExampleParse_variableExpansionFromEnvironment -->
 ```go
 file := `
-HELLO=hello 
+HELLO=hello
 WORLD=world
 MESSAGE="${HELLO} ${WORLD}${EXCLAIM}"
 `
@@ -238,7 +238,7 @@ fmt.Println(m["MESSAGE"])
 ### Escape Characters
 
 Certain backslash sequences are replaced with special characters during parsing,
-similar to shell script behavior. Files are read as UTF-8, converting specific 
+similar to shell script behavior. Files are read as UTF-8, converting specific
 byte pairs into single characters:
 
 - `\n` - becomes a newline (line feed)
