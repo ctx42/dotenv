@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac
 // SPDX-License-Identifier: MIT
 
 package dotenv_test
@@ -81,9 +81,6 @@ WORLD=world
 MESSAGE="${HELLO} ${WORLD}${EXCLAIM}"
 `
 
-	// nolint: gocritic
-	// env := dotenv.Split(os.Environ())
-	// or
 	env := map[string]string{
 		"HELLO":   "env-hello",
 		"EXCLAIM": "!",
@@ -106,7 +103,7 @@ MESSAGE="${HELLO} ${WORLD}${EXCLAIM}"
 
 func ExampleParse_preventVariableExpansion() {
 	file := `
-HELLO=hello 
+HELLO=hello
 WORLD=world
 MESSAGE='${HELLO} ${WORLD}!'
 `
@@ -121,4 +118,22 @@ MESSAGE='${HELLO} ${WORLD}!'
 	fmt.Println(m["MESSAGE"])
 	// Output:
 	// ${HELLO} ${WORLD}!
+}
+
+func ExampleSplit() {
+	// Convert os.Environ() output into a map suitable for
+	// pre-seeding Parse with existing environment variables.
+	env := dotenv.Split([]string{
+		"HOME=/home/user",
+		"PATH=/usr/local/bin:/usr/bin",
+		"USER=alice",
+	})
+
+	fmt.Println(dump.Any(env))
+	// Output:
+	// map[string]string{
+	//   "HOME": "/home/user",
+	//   "PATH": "/usr/local/bin:/usr/bin",
+	//   "USER": "alice",
+	// }
 }

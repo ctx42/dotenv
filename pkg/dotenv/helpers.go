@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac
 // SPDX-License-Identifier: MIT
 
 package dotenv
@@ -9,7 +9,7 @@ import (
 
 // Split parses [os.Environ] results and returns it as a key value map.
 func Split(env []string) map[string]string {
-	m := make(map[string]string, 10)
+	m := make(map[string]string, len(env))
 	for _, s := range env {
 		if s == "" {
 			continue

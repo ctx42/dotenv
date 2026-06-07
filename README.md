@@ -256,5 +256,21 @@ character is retained as is.
 
 ## Disclaimer
 
-This project is a heavily customized version derived from the original godotenv
-library found at [godotenv](https://github.com/joho/godotenv).
+The parsing internals — regex patterns, comment stripping, quote handling, and
+variable expansion — are derived from [godotenv](https://github.com/joho/godotenv).
+The public API is an independent design that differs in several key ways:
+
+- **Single entry point.** godotenv exposes many functions (`Load`, `Overload`,
+  `Read`, `Write`, `Marshal`, `Unmarshal`, `Env`, `Exec`). This library
+  provides one: `Parse`.
+- **`io.Reader` interface.** godotenv accepts file paths. `Parse` accepts any
+  `io.Reader`, keeping I/O concerns with the caller and making the parser
+  straightforward to test.
+- **Caller-owned map.** The caller passes in the destination map. This makes
+  the output container explicit, avoids hidden allocations, and enables the
+  pre-seeding pattern below.
+- **Explicit environment variable expansion.** godotenv expands OS environment
+  variables automatically. Here, expansion is opt-in: pre-seed the map with
+  `Split(os.Environ())` before calling `Parse`.
+- **No OS side effects.** godotenv's `Load` calls `os.Setenv`. `Parse` never
+  touches the OS environment.

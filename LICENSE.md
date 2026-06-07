@@ -1,5 +1,6 @@
 The MIT License (MIT)
 
+Copyright (c) 2013 John Barton (parsing internals, derived from godotenv)
 Copyright (c) 2025 Rafal Zajac
 
 Permission is hereby granted, free of charge, to any person obtaining

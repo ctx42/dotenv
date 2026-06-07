@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: (c) 2025 Rafal Zajac <rzajac@gmail.com>
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac
 // SPDX-License-Identifier: MIT
 
 package dotenv
@@ -154,7 +154,7 @@ func Test_Parse(t *testing.T) {
 		assert.Equal(t, want, have)
 	})
 
-	t.Run("error - invalid content", func(t *testing.T) {
+	t.Run("error - invalid content on line 1", func(t *testing.T) {
 		// --- Given ---
 		content := "" +
 			"INVALID LINE\n" +
@@ -166,7 +166,24 @@ func Test_Parse(t *testing.T) {
 
 		// --- Then ---
 		assert.Error(t, err)
+		assert.Equal(t, "invalid config line: 1", err.Error())
 		assert.Equal(t, 0, len(have))
+	})
+
+	t.Run("error - invalid content on line 2", func(t *testing.T) {
+		// --- Given ---
+		content := "" +
+			"VALID=ok\n" +
+			"INVALID LINE"
+
+		// --- When ---
+		have := map[string]string{}
+		err := Parse(have, strings.NewReader(content))
+
+		// --- Then ---
+		assert.Error(t, err)
+		assert.Equal(t, "invalid config line: 2", err.Error())
+		assert.Equal(t, 1, len(have))
 	})
 
 	t.Run("error - reading", func(t *testing.T) {

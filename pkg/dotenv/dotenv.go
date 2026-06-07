@@ -1,3 +1,8 @@
+// SPDX-FileCopyrightText: (c) 2013 John Barton
+// SPDX-FileCopyrightText: (c) 2026 Rafal Zajac
+// SPDX-License-Identifier: MIT
+
+// Package dotenv parses .env format configuration files.
 package dotenv
 
 import (
@@ -9,7 +14,7 @@ import (
 	"strings"
 )
 
-// ErrInvLine represents invalid dotenv configuration line.
+// ErrInvLine is returned when a line cannot be parsed as a key=value pair.
 var ErrInvLine = errors.New("invalid config line")
 
 var (
@@ -18,14 +23,16 @@ var (
 	doubleQuotesRX  = regexp.MustCompile(`\A"(.*)"\z`)
 	escapeRX        = regexp.MustCompile(`\\.`)
 	unescapeCharsRX = regexp.MustCompile(`\\([^$])`)
-	expandVarRX     = regexp.MustCompile(`(\\)?(\$)(\()?{?([A-Z0-9_]+)?}?`)
+	// Uppercase-only by convention: .env files use SCREAMING_SNAKE_CASE keys.
+	expandVarRX = regexp.MustCompile(`(\\)?(\$)(\()?{?([A-Z0-9_]+)?}?`)
 )
 
-// Parse reads dotenv compatible configuration from the reader to the provided
-// map.
+// Parse reads dotenv format configuration from r into m. Keys present in m
+// before the call are overwritten by keys read from r, which is the intended
+// mechanism for pre-seeding the map with environment variables via [Split].
 func Parse(m map[string]string, r io.Reader) error {
 	scn := bufio.NewScanner(r)
-	n := 1
+	n := 0
 	for scn.Scan() {
 		n++
 		lin := scn.Text()
@@ -50,7 +57,10 @@ func parseLine(n int, lin string, m map[string]string) (string, string, error) {
 		return "", "", fmt.Errorf("%w: %d", ErrInvLine, n)
 	}
 
-	// Ditch the comments (but keep quoted hashes).
+	// Strip trailing comments while preserving # inside quoted values.
+	// Strategy: split on # and walk segments, tracking whether a quote
+	// is open (an odd count of " or ' in a segment toggles the state).
+	// Segments before the first unquoted # (and any inside quotes) are kept.
 	if strings.Contains(lin, "#") {
 		segmentsBetweenHashes := strings.Split(lin, "#")
 		quotesAreOpen := false
