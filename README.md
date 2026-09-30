@@ -40,7 +40,7 @@ func Parse(m map[string]string, r io.Reader) error
 
 ### Basic
 
-<!-- gmdoceg:ExampleParse_basic -->
+<!-- gmmce:pkg/dotenv/ExampleParse_basic -->
 ```go
 file := `
 HELLO="hello"
@@ -51,7 +51,7 @@ m := map[string]string{}
 r := strings.NewReader(file)
 
 if err := dotenv.Parse(m, r); err != nil {
-    panic(err)
+	panic(err)
 }
 
 fmt.Println(dump.Any(m))
@@ -103,7 +103,7 @@ Lines starting with `#` are treated as comments. Comments can also appear after
 a value if separated by a space but only outside quotes. Within quoted strings,
 `#` is treated as a regular character.
 
-<!-- gmdoceg:ExampleParse_comments -->
+<!-- gmmce:pkg/dotenv/ExampleParse_comments -->
 ```go
 file := `
 # Comment.
@@ -115,7 +115,7 @@ m := map[string]string{}
 r := strings.NewReader(file)
 
 if err := dotenv.Parse(m, r); err != nil {
-    panic(err)
+	panic(err)
 }
 
 fmt.Println(dump.Any(m))
@@ -134,7 +134,7 @@ are replaced with the values of previously defined variables in the file.
 
 For instance:
 
-<!-- gmdoceg:ExampleParse_variableExpansion -->
+<!-- gmmce:pkg/dotenv/ExampleParse_variableExpansion -->
 ```go
 file := `
 HELLO=hello
@@ -146,7 +146,7 @@ m := map[string]string{}
 r := strings.NewReader(file)
 
 if err := dotenv.Parse(m, r); err != nil {
-    panic(err)
+	panic(err)
 }
 
 fmt.Println(m["MESSAGE"])
@@ -157,7 +157,7 @@ fmt.Println(m["MESSAGE"])
 To expand environment variables, provide an initialized map with the keys to
 expand.
 
-<!-- gmdoceg:ExampleParse_variableExpansionFromEnvironment -->
+<!-- gmmce:pkg/dotenv/ExampleParse_variableExpansionFromEnvironment -->
 ```go
 file := `
 HELLO=hello
@@ -166,13 +166,13 @@ MESSAGE="${HELLO} ${WORLD}${EXCLAIM}"
 `
 
 env := map[string]string{
-    "HELLO":   "env-hello",
-    "EXCLAIM": "!",
+	"HELLO":   "env-hello",
+	"EXCLAIM": "!",
 }
 r := strings.NewReader(file)
 
 if err := dotenv.Parse(env, r); err != nil {
-    panic(err)
+	panic(err)
 }
 
 fmt.Println(dump.Any(env))
@@ -192,14 +192,14 @@ Note that keys from the reader overwrite keys in the initialized map.
 `Split` converts the output of `os.Environ()` into a map suitable for
 pre-seeding `Parse` with existing environment variables.
 
-<!-- gmdoceg:ExampleSplit -->
+<!-- gmmce:pkg/dotenv/ExampleSplit -->
 ```go
 // Convert os.Environ() output into a map suitable for
 // pre-seeding Parse with existing environment variables.
 env := dotenv.Split([]string{
-    "HOME=/home/user",
-    "PATH=/usr/local/bin:/usr/bin",
-    "USER=alice",
+	"HOME=/home/user",
+	"PATH=/usr/local/bin:/usr/bin",
+	"USER=alice",
 })
 
 fmt.Println(dump.Any(env))
@@ -215,7 +215,7 @@ fmt.Println(dump.Any(env))
 
 To preserve placeholders like `${}` in a value, enclose it in single quotes:
 
-<!-- gmdoceg:ExampleParse_preventVariableExpansion -->
+<!-- gmmce:pkg/dotenv/ExampleParse_preventVariableExpansion -->
 ```go
 file := `
 HELLO=hello
@@ -227,7 +227,7 @@ m := map[string]string{}
 r := strings.NewReader(file)
 
 if err := dotenv.Parse(m, r); err != nil {
-    panic(err)
+	panic(err)
 }
 
 fmt.Println(m["MESSAGE"])
