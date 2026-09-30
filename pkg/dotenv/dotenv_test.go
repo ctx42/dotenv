@@ -4,6 +4,7 @@
 package dotenv
 
 import (
+	"bufio"
 	"errors"
 	"strings"
 	"testing"
@@ -164,6 +165,21 @@ func Test_Parse(t *testing.T) {
 		assert.Equal(t, want, have)
 	})
 
+	t.Run("line longer than 64 KiB", func(t *testing.T) {
+		// --- Given ---
+		have := map[string]string{}
+
+		val := strings.Repeat("a", 100<<10)
+		rdr := strings.NewReader("KEY=" + val)
+
+		// --- When ---
+		err := Parse(have, rdr)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]string{"KEY": val}, have)
+	})
+
 	t.Run("error - invalid content on line 1", func(t *testing.T) {
 		// --- Given ---
 		have := map[string]string{}
@@ -209,6 +225,21 @@ func Test_Parse(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorEqual(t, "dotenv: test error", err)
+		assert.Len(t, 0, have)
+	})
+
+	t.Run("error - line too long", func(t *testing.T) {
+		// --- Given ---
+		have := map[string]string{}
+
+		val := strings.Repeat("a", maxLineSize)
+		rdr := strings.NewReader("KEY=" + val)
+
+		// --- When ---
+		err := Parse(have, rdr)
+
+		// --- Then ---
+		assert.ErrorIs(t, bufio.ErrTooLong, err)
 		assert.Len(t, 0, have)
 	})
 

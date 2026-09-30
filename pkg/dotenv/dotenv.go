@@ -14,6 +14,9 @@ import (
 	"strings"
 )
 
+// maxLineSize is the longest line, in bytes, [Parse] accepts.
+const maxLineSize = 1 << 20
+
 // Sentinel errors.
 var (
 	// ErrInvLine is returned when a line cannot be parsed as a key=value
@@ -44,6 +47,7 @@ func Parse(m map[string]string, r io.Reader) error {
 		return ErrNilMap
 	}
 	scn := bufio.NewScanner(r)
+	scn.Buffer(nil, maxLineSize)
 	n := 0
 	for scn.Scan() {
 		n++
