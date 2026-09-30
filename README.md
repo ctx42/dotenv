@@ -6,6 +6,7 @@
 
 <!-- TOC -->
 * [dotenv: Parse .env files for Go](#dotenv-parse-env-files-for-go)
+  * [Features](#features)
   * [Installation](#installation)
   * [Usage](#usage)
     * [Basic](#basic)
@@ -17,9 +18,20 @@
   * [Disclaimer](#disclaimer)
 <!-- TOC -->
 
-Dotenv files, typically named .env, store configuration settings as key-value
-pairs. This format originates from shell scripts used to set environment
-variables.
+`dotenv` is a Go package that parses `.env` files into a map. Dotenv files
+store configuration settings as key-value pairs, a format that originates from
+shell scripts used to set environment variables. The package suits
+applications and tools that read such files without changing the process
+environment.
+
+## Features
+
+- Reads from any `io.Reader`: a file, a string, or any other stream.
+- Writes into a map the caller owns, so entries can be pre-seeded.
+- Pre-seeds from the process environment with `Split(os.Environ())`.
+- Expands `$NAME` and `${NAME}` references; single quotes keep values literal.
+- Never modifies the OS environment.
+- Depends on the Go standard library only.
 
 ## Installation
 
