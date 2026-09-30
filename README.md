@@ -16,6 +16,8 @@
     * [Split](#split)
     * [Preventing Expansion](#preventing-expansion)
     * [Escape Characters](#escape-characters)
+    * [Format Notes](#format-notes)
+    * [Errors](#errors)
   * [Disclaimer](#disclaimer)
 <!-- TOC -->
 
@@ -292,6 +294,21 @@ characters, similar to shell script behavior:
 If a backslash precedes any other character, the backslash is removed, and the
 character is retained as is. Single-quoted values are taken literally, and
 unquoted values keep their backslashes, except that `\$` is a literal `$`.
+
+### Format Notes
+
+- A key and its value may be separated by `=` or `:` (`KEY: value`); the
+  first of the two on the line is the separator.
+- A UTF-8 byte order mark at the start of the input is ignored.
+- Lines are limited to 1 MiB; a longer line fails with an error wrapping
+  `bufio.ErrTooLong`.
+
+### Errors
+
+A line that is not a key-value pair makes `Parse` return an error wrapping
+`ErrInvLine` that names the line number, for example
+`dotenv: invalid config line: 3`. The map keeps the pairs read before that
+line. A nil map returns `ErrNilMap`.
 
 ## Disclaimer
 
