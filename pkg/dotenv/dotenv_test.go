@@ -114,8 +114,8 @@ func Test_Parse(t *testing.T) {
 		// --- Given ---
 		have := map[string]string{}
 
-		content := "export OPTION_A='postgres://localhost:5432/database?sslmode=disable'\n"
-		rdr := strings.NewReader(content)
+		url := "postgres://localhost:5432/database?sslmode=disable"
+		rdr := strings.NewReader("export OPTION_A='" + url + "'\n")
 
 		// --- When ---
 		err := Parse(have, rdr)
@@ -123,7 +123,7 @@ func Test_Parse(t *testing.T) {
 		// --- Then ---
 		assert.NoError(t, err)
 		want := map[string]string{
-			"OPTION_A": "postgres://localhost:5432/database?sslmode=disable",
+			"OPTION_A": url,
 		}
 		assert.Equal(t, want, have)
 	})

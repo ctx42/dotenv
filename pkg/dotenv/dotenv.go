@@ -117,7 +117,7 @@ func parseValue(val string, m map[string]string) string {
 
 	if isDouble {
 		// Expand newlines.
-		val = escapeRX.ReplaceAllStringFunc(val, func(match string) string {
+		expand := func(match string) string {
 			c := strings.TrimPrefix(match, `\`)
 			switch c {
 			case "n":
@@ -127,7 +127,8 @@ func parseValue(val string, m map[string]string) string {
 			default:
 				return match
 			}
-		})
+		}
+		val = escapeRX.ReplaceAllStringFunc(val, expand)
 		// Unescape characters.
 		val = unescapeCharsRX.ReplaceAllString(val, "$1")
 	}
