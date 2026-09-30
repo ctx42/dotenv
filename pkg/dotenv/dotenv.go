@@ -20,8 +20,12 @@ var ErrInvLine = errors.New("invalid config line")
 var (
 	escapeRX        = regexp.MustCompile(`\\.`)
 	unescapeCharsRX = regexp.MustCompile(`\\([^$])`)
-	// Uppercase-only by convention: .env files use SCREAMING_SNAKE_CASE keys.
-	expandVarRX = regexp.MustCompile(`(\\)?(\$)(\()?{?([A-Z0-9_]+)?}?`)
+	// Matches an escaped "\$", a "$(", "${NAME}", or "$NAME". Names are
+	// uppercase-only by convention: .env files use SCREAMING_SNAKE_CASE
+	// keys.
+	expandVarRX = regexp.MustCompile(
+		`\\\$|\$\(|\$\{[A-Z0-9_]+\}|\$[A-Z0-9_]+`,
+	)
 )
 
 // Parse reads dotenv format configuration from r into m. Keys present in m
@@ -120,19 +124,14 @@ func parseValue(val string, m map[string]string) string {
 //	OPTION_B=${OPTION_A}
 func expandVariables(src string, m map[string]string) string {
 	repl := func(s string) string {
-		sub := expandVarRX.FindStringSubmatch(s)
-		if sub == nil {
+		switch s {
+		case `\$`:
+			return "$"
+		case "$(":
+			// Keep unsupported command substitution verbatim.
 			return s
 		}
-		if sub[1] == "\\" {
-			return sub[0][1:]
-		} else if sub[3] == "(" {
-			// Command substitution is not supported, keep it verbatim.
-			return sub[0]
-		} else if sub[4] != "" {
-			return m[sub[4]]
-		}
-		return s
+		return m[strings.Trim(s[1:], "{}")]
 	}
 	return expandVarRX.ReplaceAllStringFunc(src, repl)
 }

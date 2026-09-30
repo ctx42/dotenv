@@ -510,6 +510,24 @@ func Test_expandVariables_tabular(t *testing.T) {
 			map[string]string{},
 			"BAR=$(whoami)",
 		},
+		{
+			"not closed brace is not expanded",
+			"BAR=${FOO",
+			map[string]string{"FOO": "test"},
+			"BAR=${FOO",
+		},
+		{
+			"closing brace without opening is kept",
+			"BAR=$FOO}",
+			map[string]string{"FOO": "test"},
+			"BAR=test}",
+		},
+		{
+			"escaped dollar not followed by a name",
+			`BAR=\$ 5`,
+			map[string]string{},
+			"BAR=$ 5",
+		},
 	}
 
 	for _, tc := range tt {
