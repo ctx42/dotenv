@@ -71,7 +71,8 @@ func Parse(m map[string]string, r io.Reader) error {
 	return nil
 }
 
-// parseLine parses configuration line, returns key, value pair.
+// parseLine parses a configuration line and returns its key and value. Errors
+// report n as the line number.
 func parseLine(n int, lin string, m map[string]string) (string, string, error) {
 	if lin == "" {
 		return "", "", fmt.Errorf("%w: %d", ErrInvLine, n)
@@ -99,7 +100,7 @@ func parseLine(n int, lin string, m map[string]string) (string, string, error) {
 	return key, val, nil
 }
 
-// parseValue parses value part of the key-value configuration line.
+// parseValue parses the value part of a key-value configuration line.
 func parseValue(val string, m map[string]string) string {
 	val = strings.TrimSpace(val)
 
@@ -140,8 +141,8 @@ func parseValue(val string, m map[string]string) string {
 	return val
 }
 
-// expandVariables expands variables. In the below example, "${OPTION_A}" will
-// be expanded to "1".
+// expandVariables replaces variable references in src with their values
+// from m. In the example below, "${OPTION_A}" expands to "1".
 //
 //	OPTION_A=1
 //	OPTION_B=${OPTION_A}
@@ -181,8 +182,8 @@ func extractKey(s string) string {
 // stripComment removes an inline comment from a line, preserving '#'
 // characters inside a quoted value. A value is quoted only when a quote opens
 // it right after the separator; the quoted span ends at the matching quote,
-// skipping backslash-escaped characters in double quotes. A line with a not
-// closed quoted value is returned unchanged.
+// skipping backslash-escaped characters in double quotes. A line with an
+// unclosed quoted value is returned unchanged.
 func stripComment(lin string) string {
 	from := 0
 	sep := strings.IndexAny(lin, "=:#")

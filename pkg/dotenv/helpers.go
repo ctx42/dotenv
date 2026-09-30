@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// Split parses [os.Environ] results and returns it as a key value map.
+// Split converts [os.Environ] output into a key-value map.
 func Split(env []string) map[string]string {
 	m := make(map[string]string, len(env))
 	for _, s := range env {
