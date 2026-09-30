@@ -73,7 +73,7 @@ fmt.Println(dump.Any(m))
 You can prefix lines with "export" to enable sourcing the file in a shell
 environment:
 
-```
+```dotenv
 export KEY_ONE=value_one
 export KEY_TWO=value_two
 ```
@@ -86,7 +86,7 @@ expression:
 [a-zA-Z_]+[a-zA-Z0-9_]*
 ```
 
-```
+```dotenv
 FOOBAR   # ok
 FOO_BAR  # ok
 foobar   # ok
@@ -104,7 +104,7 @@ underscores, so `${foobar}` is never expanded.
 Values follow the equals sign and can be enclosed in quotes if needed. Single
 quotes prevent variable expansion within the value.
 
-```
+```dotenv
 SIMPLE=hello
 EXPAND="multiple\nlines text with variable expansion: ${SIMPLE}"
 DO_NOT_EXPAND='raw text without variable interpolation'
