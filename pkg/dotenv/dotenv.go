@@ -124,8 +124,11 @@ func expandVariables(src string, m map[string]string) string {
 		if sub == nil {
 			return s
 		}
-		if sub[1] == "\\" || sub[2] == "(" {
+		if sub[1] == "\\" {
 			return sub[0][1:]
+		} else if sub[3] == "(" {
+			// Command substitution is not supported, keep it verbatim.
+			return sub[0]
 		} else if sub[4] != "" {
 			return m[sub[4]]
 		}

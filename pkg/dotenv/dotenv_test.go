@@ -498,6 +498,18 @@ func Test_expandVariables_tabular(t *testing.T) {
 			map[string]string{"BAR": "aaa"},
 			"$%^&*",
 		},
+		{
+			"command substitution is not expanded",
+			"BAR=$(FOO)",
+			map[string]string{"FOO": "test"},
+			"BAR=$(FOO)",
+		},
+		{
+			"lowercase command substitution is not expanded",
+			"BAR=$(whoami)",
+			map[string]string{},
+			"BAR=$(whoami)",
+		},
 	}
 
 	for _, tc := range tt {
