@@ -37,11 +37,13 @@ import "github.com/ctx42/dotenv/pkg/dotenv"
 
 ## Usage
 
-The library offers a single function, Parse, which reads dotenv-formatted
-content from a reader and stores it in a key-value map.
+The package has two functions: `Parse` reads dotenv-formatted content from a
+reader and stores it in a key-value map, and `Split` converts `os.Environ()`
+output into a map for pre-seeding `Parse`.
 
 ```go
 func Parse(m map[string]string, r io.Reader) error
+func Split(env []string) map[string]string
 ```
 
 ### Basic
