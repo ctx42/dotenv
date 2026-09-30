@@ -21,10 +21,10 @@ const maxLineSize = 1 << 20
 var (
 	// ErrInvLine is returned when a line cannot be parsed as a key=value
 	// pair.
-	ErrInvLine = errors.New("invalid config line")
+	ErrInvLine = errors.New("dotenv: invalid config line")
 
 	// ErrNilMap is returned by [Parse] when given a nil map.
-	ErrNilMap = errors.New("nil map")
+	ErrNilMap = errors.New("dotenv: nil map")
 )
 
 var (

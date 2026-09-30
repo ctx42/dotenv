@@ -221,7 +221,7 @@ func Test_Parse(t *testing.T) {
 		err := Parse(have, rdr)
 
 		// --- Then ---
-		assert.ErrorEqual(t, "invalid config line: 1", err)
+		assert.ErrorEqual(t, "dotenv: invalid config line: 1", err)
 		assert.Len(t, 0, have)
 	})
 
@@ -238,7 +238,7 @@ func Test_Parse(t *testing.T) {
 		err := Parse(have, rdr)
 
 		// --- Then ---
-		assert.ErrorEqual(t, "invalid config line: 2", err)
+		assert.ErrorEqual(t, "dotenv: invalid config line: 2", err)
 		assert.Len(t, 1, have)
 	})
 
@@ -522,7 +522,8 @@ func Test_parseLine_error_tabular(t *testing.T) {
 
 			// --- Then ---
 			assert.ErrorIs(t, ErrInvLine, err)
-			assert.ErrorEqual(t, "invalid config line: 7", err)
+			want := "dotenv: invalid config line: 7"
+			assert.ErrorEqual(t, want, err)
 			assert.Equal(t, "", hKey)
 			assert.Equal(t, "", hVal)
 		})
