@@ -7,6 +7,7 @@
 <!-- TOC -->
 * [dotenv: Parse .env files for Go](#dotenv-parse-env-files-for-go)
   * [Features](#features)
+  * [Prerequisites](#prerequisites)
   * [Installation](#installation)
   * [Usage](#usage)
     * [Basic](#basic)
@@ -32,6 +33,10 @@ environment.
 - Expands `$NAME` and `${NAME}` references; single quotes keep values literal.
 - Never modifies the OS environment.
 - Depends on the Go standard library only.
+
+## Prerequisites
+
+Go 1.26 or later.
 
 ## Installation
 
