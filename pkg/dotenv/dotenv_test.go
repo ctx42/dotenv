@@ -428,45 +428,27 @@ func Test_parseLine_error_tabular(t *testing.T) {
 	tt := []struct {
 		testN string
 
-		lin  string
-		want string
+		lin string
 	}{
-		{"error - invalid format", "lol$wut", "invalid config line: 0"},
-		{"error - empty line", "", "invalid config line: 1"},
-		{"error - empty key", `="value"`, "invalid config line: 2"},
-		{
-			"error - space in key",
-			"MY KEY=value",
-			"invalid config line: 3",
-		},
-		{
-			"error - tab in key",
-			"MY\tKEY=value",
-			"invalid config line: 4",
-		},
-		{
-			"error - space in exported key",
-			"export MY KEY=v",
-			"invalid config line: 5",
-		},
+		{"error - invalid format", "lol$wut"},
+		{"error - empty line", ""},
+		{"error - empty key", `="value"`},
+		{"error - space in key", "MY KEY=value"},
+		{"error - tab in key", "MY\tKEY=value"},
+		{"error - space in exported key", "export MY KEY=v"},
 	}
 
-	for n, tc := range tt {
-		n := n
+	for _, tc := range tt {
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- Given ---
 			m := make(map[string]string)
 
 			// --- When ---
-			key, val, err := parseLine(n, tc.lin, m)
+			key, val, err := parseLine(7, tc.lin, m)
 
 			// --- Then ---
-			assert.Error(t, err)
-			if !errors.Is(err, ErrInvLine) {
-				t.Error("expected err to have ErrInvDotEnvLine in the chain")
-				return
-			}
-			assert.Equal(t, tc.want, err.Error())
+			assert.ErrorIs(t, ErrInvLine, err)
+			assert.Equal(t, "invalid config line: 7", err.Error())
 			assert.Equal(t, "", key)
 			assert.Equal(t, "", val)
 		})
