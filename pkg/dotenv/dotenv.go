@@ -97,7 +97,7 @@ func parseLine(n int, lin string, m map[string]string) (string, string, error) {
 func parseValue(val string, m map[string]string) string {
 	val = strings.TrimSpace(val)
 
-	// Check if we've got quoted values or possible escapes.
+	// Too short to be quoted.
 	if len(val) <= 1 {
 		return val
 	}
