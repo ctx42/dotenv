@@ -257,9 +257,8 @@ fmt.Println(m["MESSAGE"])
 
 ### Escape Characters
 
-Certain backslash sequences are replaced with special characters during parsing,
-similar to shell script behavior. Files are read as UTF-8, converting specific
-byte pairs into single characters:
+In double-quoted values, certain backslash sequences are replaced with special
+characters, similar to shell script behavior:
 
 - `\n` - becomes a newline (line feed)
 - `\r` - becomes a carriage return
@@ -269,11 +268,13 @@ byte pairs into single characters:
 - `\"` - becomes a double quote
 - `\'` - becomes a single quote
 - `\\` - becomes a backslash
+- `\$` - becomes a literal `$` instead of starting a variable
 - `\uABCD` inserts a Unicode character (four hex digits); a UTF-16 surrogate
   pair such as `\uD83D\uDE00` inserts one character
 
 If a backslash precedes any other character, the backslash is removed, and the
-character is retained as is.
+character is retained as is. Single-quoted values are taken literally, and
+unquoted values keep their backslashes, except that `\$` is a literal `$`.
 
 ## Disclaimer
 
