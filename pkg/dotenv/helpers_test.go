@@ -20,9 +20,21 @@ func Test_Split_tabular(t *testing.T) {
 		{"slice with empty string", []string{""}, map[string]string{}},
 		{"without equal sign", []string{"A"}, map[string]string{}},
 		{"empty key", []string{`=C:=C:\`}, map[string]string{}},
-		{"simple key value", []string{"A=B"}, map[string]string{"A": "B"}},
-		{"multiple equal", []string{"A=B=C"}, map[string]string{"A": "B=C"}},
-		{"key without value", []string{"A="}, map[string]string{"A": ""}},
+		{
+			"simple key value",
+			[]string{"A=B"},
+			map[string]string{"A": "B"},
+		},
+		{
+			"multiple equal",
+			[]string{"A=B=C"},
+			map[string]string{"A": "B=C"},
+		},
+		{
+			"key without value",
+			[]string{"A="},
+			map[string]string{"A": ""},
+		},
 	}
 
 	for _, tc := range tt {
