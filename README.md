@@ -91,10 +91,15 @@ FOOBAR   # ok
 FOO_BAR  # ok
 foobar   # ok
 foo_bar  # ok
-foo-bar  # invalid
-∑KEY     # invalid
-123VAR   # invalid
+foo-bar  # avoid
+∑KEY     # avoid
+123VAR   # avoid
 ```
+
+`Parse` rejects only an empty key or a key containing whitespace, returning an
+error that wraps `ErrInvLine`; other keys are stored as written. Variable
+expansion resolves only names made of uppercase letters, digits, and
+underscores, so `${foobar}` is never expanded.
 
 Values follow the equals sign and can be enclosed in quotes if needed. Single
 quotes prevent variable expansion within the value.
