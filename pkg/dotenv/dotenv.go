@@ -30,7 +30,9 @@ var (
 // Parse reads dotenv format configuration from r into m. Keys present in m
 // before the call are overwritten by keys read from r, which is the intended
 // mechanism for pre-seeding the map with environment variables via [Split].
-// Returns [ErrNilMap] when m is nil.
+// Returns [ErrNilMap] when m is nil. A line that is not a key-value pair
+// returns an error wrapping [ErrInvLine] with the line number; m then keeps
+// the pairs read before that line.
 func Parse(m map[string]string, r io.Reader) error {
 	if m == nil {
 		return ErrNilMap
