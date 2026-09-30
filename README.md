@@ -257,8 +257,8 @@ character is retained as is.
 
 ## Disclaimer
 
-The parsing internals — regex patterns, comment stripping, quote handling, and
-variable expansion — are derived from [godotenv](https://github.com/joho/godotenv).
+The parsing internals — comment stripping, quote handling, and variable
+expansion — are derived from [godotenv](https://github.com/joho/godotenv).
 The public API is an independent design that differs in several key ways:
 
 - **Single entry point.** godotenv exposes many functions (`Load`, `Overload`,
