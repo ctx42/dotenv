@@ -153,26 +153,35 @@ func extractKey(s string) string {
 	return s
 }
 
-// stripComment removes an inline comment from a line, preserving
-// '#' characters inside quoted strings.
+// stripComment removes an inline comment from a line, preserving '#'
+// characters inside a quoted value. A value is quoted only when a quote opens
+// it right after the separator; the quoted span ends at the matching quote,
+// skipping backslash-escaped characters in double quotes. A line with a not
+// closed quoted value is returned unchanged.
 func stripComment(lin string) string {
-	inSingle := false
-	inDouble := false
-	for i := 0; i < len(lin); i++ {
-		switch lin[i] {
-		case '\'':
-			if !inDouble {
-				inSingle = !inSingle
+	from := 0
+	sep := strings.IndexAny(lin, "=:#")
+	if sep != -1 && lin[sep] != '#' {
+		from = sep + 1
+		for from < len(lin) && (lin[from] == ' ' || lin[from] == '\t') {
+			from++
+		}
+		if from < len(lin) && (lin[from] == '"' || lin[from] == '\'') {
+			quote := lin[from]
+			from++
+			for from < len(lin) && lin[from] != quote {
+				if quote == '"' && lin[from] == '\\' {
+					from++
+				}
+				from++
 			}
-		case '"':
-			if !inSingle {
-				inDouble = !inDouble
-			}
-		case '#':
-			if !inSingle && !inDouble {
-				return strings.TrimRight(lin[:i], " \t")
+			if from >= len(lin) {
+				return lin
 			}
 		}
+	}
+	if idx := strings.IndexByte(lin[from:], '#'); idx != -1 {
+		return strings.TrimRight(lin[:from+idx], " \t")
 	}
 	return lin
 }

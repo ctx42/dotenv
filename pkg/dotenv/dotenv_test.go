@@ -371,6 +371,13 @@ func Test_parseLine(t *testing.T) {
 			"FOO",
 			"bar\\r baz",
 		},
+		{
+			"escaped double quote and a line comment",
+			`FOO="a\"b" # comment`,
+			"FOO",
+			`a"b`,
+		},
+		{"apostrophe and a line comment", "FOO=it's # note", "FOO", "it's"},
 		{"line without a key name and with a value", `="value"`, "", "value"},
 		{"value is a single double-quote character", `KEY="`, "KEY", "\""},
 		{"value with not closed double-quote", `KEY="value`, "KEY", "\"value"},
@@ -605,6 +612,15 @@ func Test_stripComment_tabular(t *testing.T) {
 			"FOO='' # comment",
 			"FOO=''",
 		},
+		{"apostrophe in unquoted value", "FOO=it's # note", "FOO=it's"},
+		{"double quote in unquoted value", `FOO=5" # inches`, `FOO=5"`},
+		{
+			"escaped double quote in double-quoted",
+			`FOO="a\"b" # comment`,
+			`FOO="a\"b"`,
+		},
+		{"quoted value after colon", `FOO: "a#b" # comment`, `FOO: "a#b"`},
+		{"hash in not closed double-quote", `FOO="a # b`, `FOO="a # b`},
 	}
 
 	for _, tc := range tt {
