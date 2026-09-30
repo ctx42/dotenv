@@ -1,3 +1,52 @@
+## v0.5.0 (Wed, 30 Sep 2026 13:38:10 UTC)
+- fix(dotenv): only a leading quote opens a quoted value.
+- fix(dotenv): keep command substitution verbatim.
+- fix(dotenv): require balanced braces in variable references.
+- fix(dotenv)!: return ErrNilMap when Parse is given a nil map.
+- fix(dotenv)!: reject empty keys and keys containing whitespace.
+- test(dotenv): order tests by declaration order in dotenv.go.
+- test(dotenv): add _tabular suffix to table-driven test names.
+- chore: update dependency ctx42/testing to v0.56.0.
+- test(dotenv): shorten subtest names to the condition under test.
+- test(dotenv): prefix parseLine error subtest names with "error - ".
+- test(dotenv): make parseLine error table branch-free.
+- test(dotenv): name parseLine error results hKey and hVal.
+- test(dotenv): use ErrorEqual and Len assertions.
+- test(dotenv): prepare Parse arguments in the Given step.
+- test(dotenv): cover Split entries without a separator or key.
+- fix(dotenv): accept lines up to 1 MiB.
+- fix(dotenv): ignore a UTF-8 byte order mark on the first line.
+- refactor(dotenv): prefix all errors with "dotenv:".
+- style(dotenv): keep lines within 80 columns.
+- docs(dotenv): fix godoc grammar.
+- style(dotenv): break long table rows one element per line.
+- fix(dotenv): require whitespace before an inline comment.
+- fix(dotenv): decode all documented escapes in double-quoted values.
+- fix(dotenv): expand variables after an escaped backslash.
+- docs(dotenv): document Parse errors on invalid lines.
+- refactor(dotenv): split environment entries with strings.Cut.
+- test(dotenv): use b.Loop in benchmarks.
+- test(dotenv): remove trailing spaces from example inputs.
+- style(dotenv): separate the map assertion in parseLine tests.
+- docs: update the parsing pipeline in AGENTS.md.
+- fix(dotenv): do not close a double-quoted value on an escaped quote.
+- fix(dotenv): decode UTF-16 surrogate pairs in unicode escapes.
+- docs: drop regex patterns from the godotenv attribution.
+- docs(dotenv): fix the short-value comment in parseValue.
+- docs: inject README examples with gomake :doc:mce markers.
+- docs: show the package import path in the README.
+- docs: list both public functions in the README usage.
+- docs: describe which keys Parse accepts and expands.
+- docs: spell out the variable expansion rules.
+- docs: limit README escape sequences to double-quoted values.
+- docs: declare the dotenv language on README code fences.
+- docs: add a README overview and feature list.
+- docs: put README badges above the title and link the tests badge.
+- docs: state the required Go version in the README.
+- docs: correct the godotenv comparison in the README.
+- docs: document the separator, input limits, and errors in the README.
+- chore: bump version to v0.5.0.
+
 ## v0.5.0 (Wed, 30 Sep 2026 13:35:44 UTC)
 - fix(dotenv): only a leading quote opens a quoted value.
 - fix(dotenv): keep command substitution verbatim.
