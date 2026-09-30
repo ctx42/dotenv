@@ -15,6 +15,8 @@ import (
 func Test_Parse(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		// --- Given ---
+		have := map[string]string{}
+
 		content := "" +
 			"ONE=1\n" +
 			"TWO='2'\n" +
@@ -22,7 +24,6 @@ func Test_Parse(t *testing.T) {
 		rdr := strings.NewReader(content)
 
 		// --- When ---
-		have := map[string]string{}
 		err := Parse(have, rdr)
 
 		// --- Then ---
@@ -37,6 +38,8 @@ func Test_Parse(t *testing.T) {
 
 	t.Run("commented lines", func(t *testing.T) {
 		// --- Given ---
+		have := map[string]string{}
+
 		content := "" +
 			"\t#ONE=1\n" +
 			"TWO='2'\n" +
@@ -44,7 +47,6 @@ func Test_Parse(t *testing.T) {
 		rdr := strings.NewReader(content)
 
 		// --- When ---
-		have := map[string]string{}
 		err := Parse(have, rdr)
 
 		// --- Then ---
@@ -57,6 +59,8 @@ func Test_Parse(t *testing.T) {
 
 	t.Run("whitespace around equal sign", func(t *testing.T) {
 		// --- Given ---
+		have := map[string]string{}
+
 		content := "" +
 			"OPTION_A=1\n" +
 			"OPTION_B=2\n" +
@@ -65,10 +69,10 @@ func Test_Parse(t *testing.T) {
 			"OPTION_E = 5\n" +
 			"OPTION_F =\n" +
 			"OPTION_G=\n"
+		rdr := strings.NewReader(content)
 
 		// --- When ---
-		have := map[string]string{}
-		err := Parse(have, strings.NewReader(content))
+		err := Parse(have, rdr)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -86,13 +90,15 @@ func Test_Parse(t *testing.T) {
 
 	t.Run("export prefix", func(t *testing.T) {
 		// --- Given ---
+		have := map[string]string{}
+
 		content := "" +
 			"export OPTION_A=2\n" +
 			"export OPTION_B='\\n'"
+		rdr := strings.NewReader(content)
 
 		// --- When ---
-		have := map[string]string{}
-		err := Parse(have, strings.NewReader(content))
+		err := Parse(have, rdr)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -105,11 +111,13 @@ func Test_Parse(t *testing.T) {
 
 	t.Run("equal sign in value", func(t *testing.T) {
 		// --- Given ---
+		have := map[string]string{}
+
 		content := "export OPTION_A='postgres://localhost:5432/database?sslmode=disable'\n"
+		rdr := strings.NewReader(content)
 
 		// --- When ---
-		have := map[string]string{}
-		err := Parse(have, strings.NewReader(content))
+		err := Parse(have, rdr)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -121,6 +129,8 @@ func Test_Parse(t *testing.T) {
 
 	t.Run("quoted values", func(t *testing.T) {
 		// --- Given ---
+		have := map[string]string{}
+
 		content := "" +
 			"OPTION_A='1'\n" +
 			"OPTION_B='2'\n" +
@@ -132,10 +142,10 @@ func Test_Parse(t *testing.T) {
 			"OPTION_H=\"\\n\"\n" +
 			"OPTION_I = \"echo 'asd'\"\n" +
 			"OPTION_J = \"echo \"\\r\"\""
+		rdr := strings.NewReader(content)
 
 		// --- When ---
-		have := map[string]string{}
-		err := Parse(have, strings.NewReader(content))
+		err := Parse(have, rdr)
 
 		// --- Then ---
 		assert.NoError(t, err)
@@ -156,13 +166,15 @@ func Test_Parse(t *testing.T) {
 
 	t.Run("error - invalid content on line 1", func(t *testing.T) {
 		// --- Given ---
+		have := map[string]string{}
+
 		content := "" +
 			"INVALID LINE\n" +
 			"foo=bar"
+		rdr := strings.NewReader(content)
 
 		// --- When ---
-		have := map[string]string{}
-		err := Parse(have, strings.NewReader(content))
+		err := Parse(have, rdr)
 
 		// --- Then ---
 		assert.ErrorEqual(t, "invalid config line: 1", err)
@@ -171,13 +183,15 @@ func Test_Parse(t *testing.T) {
 
 	t.Run("error - invalid content on line 2", func(t *testing.T) {
 		// --- Given ---
+		have := map[string]string{}
+
 		content := "" +
 			"VALID=ok\n" +
 			"INVALID LINE"
+		rdr := strings.NewReader(content)
 
 		// --- When ---
-		have := map[string]string{}
-		err := Parse(have, strings.NewReader(content))
+		err := Parse(have, rdr)
 
 		// --- Then ---
 		assert.ErrorEqual(t, "invalid config line: 2", err)
@@ -185,9 +199,13 @@ func Test_Parse(t *testing.T) {
 	})
 
 	t.Run("error - reading", func(t *testing.T) {
-		// --- When ---
+		// --- Given ---
 		have := map[string]string{}
-		err := Parse(have, iotest.ErrReader(errors.New("test error")))
+
+		rdr := iotest.ErrReader(errors.New("test error"))
+
+		// --- When ---
+		err := Parse(have, rdr)
 
 		// --- Then ---
 		assert.ErrorEqual(t, "dotenv: test error", err)
