@@ -145,6 +145,13 @@ Unquoted or double-quoted values support placeholders like `${VAR_NAME}`, which
 are replaced with the values of previously defined variables in the file.
 **Environment variables are not expanded.**
 
+- Both `$VAR_NAME` and `${VAR_NAME}` are supported.
+- Names consist of uppercase letters, digits, and underscores; other text
+  after `$` is kept as written.
+- An undefined variable expands to an empty string.
+- `\$` produces a literal `$`, and `$(...)` is kept as written because
+  command substitution is not supported.
+
 For instance:
 
 <!-- gmmce:pkg/dotenv/ExampleParse_variableExpansion -->
