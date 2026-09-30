@@ -11,16 +11,11 @@ import (
 func Split(env []string) map[string]string {
 	m := make(map[string]string, len(env))
 	for _, s := range env {
-		if s == "" {
+		key, val, ok := strings.Cut(s, "=")
+		if !ok || key == "" {
 			continue
 		}
-		parts := strings.SplitN(s, "=", 2)
-		if len(parts) == 2 {
-			if parts[0] == "" {
-				continue
-			}
-			m[parts[0]] = parts[1]
-		}
+		m[key] = val
 	}
 	return m
 }
