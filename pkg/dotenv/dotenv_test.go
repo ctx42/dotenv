@@ -444,13 +444,13 @@ func Test_parseLine_error_tabular(t *testing.T) {
 			m := make(map[string]string)
 
 			// --- When ---
-			key, val, err := parseLine(7, tc.lin, m)
+			hKey, hVal, err := parseLine(7, tc.lin, m)
 
 			// --- Then ---
 			assert.ErrorIs(t, ErrInvLine, err)
 			assert.Equal(t, "invalid config line: 7", err.Error())
-			assert.Equal(t, "", key)
-			assert.Equal(t, "", val)
+			assert.Equal(t, "", hKey)
+			assert.Equal(t, "", hVal)
 		})
 	}
 }
