@@ -220,7 +220,7 @@ func Test_Parse(t *testing.T) {
 	})
 }
 
-func Test_parseLine(t *testing.T) {
+func Test_parseLine_tabular(t *testing.T) {
 	tt := []struct {
 		testN string
 
@@ -345,7 +345,7 @@ func Test_parseLine(t *testing.T) {
 	}
 }
 
-func Test_parseLine_interpolation(t *testing.T) {
+func Test_parseLine_interpolation_tabular(t *testing.T) {
 	tt := []struct {
 		testN string
 		line  string
@@ -424,7 +424,7 @@ func Test_parseLine_interpolation(t *testing.T) {
 	}
 }
 
-func Test_parseLine_error(t *testing.T) {
+func Test_parseLine_error_tabular(t *testing.T) {
 	tt := []struct {
 		testN string
 
@@ -566,7 +566,7 @@ func Test_expandVariables_tabular(t *testing.T) {
 	}
 }
 
-func Test_isIgnoredLine(t *testing.T) {
+func Test_isIgnoredLine_tabular(t *testing.T) {
 	tt := []struct {
 		testN string
 

@@ -11,7 +11,7 @@ go test -count=1 -race ./...
 go test -count=1 -race -run Test_Parse ./pkg/dotenv/
 
 # Run a specific subtest
-go test -count=1 -race -run 'Test_parseLine/key_value' ./pkg/dotenv/
+go test -count=1 -race -run 'Test_parseLine_tabular/key_value' ./pkg/dotenv/
 
 # Vet
 go vet ./...
