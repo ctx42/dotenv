@@ -459,6 +459,7 @@ func Test_parseLine_tabular(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wKey, hKey)
 			assert.Equal(t, tc.wVal, hVal)
+
 			assert.Len(t, 0, m)
 		})
 	}
