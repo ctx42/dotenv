@@ -165,9 +165,8 @@ func Test_Parse(t *testing.T) {
 		err := Parse(have, strings.NewReader(content))
 
 		// --- Then ---
-		assert.Error(t, err)
-		assert.Equal(t, "invalid config line: 1", err.Error())
-		assert.Equal(t, 0, len(have))
+		assert.ErrorEqual(t, "invalid config line: 1", err)
+		assert.Len(t, 0, have)
 	})
 
 	t.Run("error - invalid content on line 2", func(t *testing.T) {
@@ -181,9 +180,8 @@ func Test_Parse(t *testing.T) {
 		err := Parse(have, strings.NewReader(content))
 
 		// --- Then ---
-		assert.Error(t, err)
-		assert.Equal(t, "invalid config line: 2", err.Error())
-		assert.Equal(t, 1, len(have))
+		assert.ErrorEqual(t, "invalid config line: 2", err)
+		assert.Len(t, 1, have)
 	})
 
 	t.Run("error - reading", func(t *testing.T) {
@@ -192,9 +190,8 @@ func Test_Parse(t *testing.T) {
 		err := Parse(have, iotest.ErrReader(errors.New("test error")))
 
 		// --- Then ---
-		assert.Error(t, err)
-		assert.Equal(t, "dotenv: test error", err.Error())
-		assert.Equal(t, 0, len(have))
+		assert.ErrorEqual(t, "dotenv: test error", err)
+		assert.Len(t, 0, have)
 	})
 
 	t.Run("error - nil map with empty input", func(t *testing.T) {
@@ -448,7 +445,7 @@ func Test_parseLine_error_tabular(t *testing.T) {
 
 			// --- Then ---
 			assert.ErrorIs(t, ErrInvLine, err)
-			assert.Equal(t, "invalid config line: 7", err.Error())
+			assert.ErrorEqual(t, "invalid config line: 7", err)
 			assert.Equal(t, "", hKey)
 			assert.Equal(t, "", hVal)
 		})
