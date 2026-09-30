@@ -35,7 +35,7 @@ func Test_Parse(t *testing.T) {
 		assert.Equal(t, want, have)
 	})
 
-	t.Run("commented lines are skipped", func(t *testing.T) {
+	t.Run("commented lines", func(t *testing.T) {
 		// --- Given ---
 		content := "" +
 			"\t#ONE=1\n" +
@@ -84,7 +84,7 @@ func Test_Parse(t *testing.T) {
 		assert.Equal(t, want, have)
 	})
 
-	t.Run("lines starting with export are ok", func(t *testing.T) {
+	t.Run("export prefix", func(t *testing.T) {
 		// --- Given ---
 		content := "" +
 			"export OPTION_A=2\n" +
@@ -103,7 +103,7 @@ func Test_Parse(t *testing.T) {
 		assert.Equal(t, want, have)
 	})
 
-	t.Run("values may contain equal sign", func(t *testing.T) {
+	t.Run("equal sign in value", func(t *testing.T) {
 		// --- Given ---
 		content := "export OPTION_A='postgres://localhost:5432/database?sslmode=disable'\n"
 
@@ -321,7 +321,7 @@ func Test_parseLine_tabular(t *testing.T) {
 			`a"b`,
 		},
 		{"apostrophe and a line comment", "FOO=it's # note", "FOO", "it's"},
-		{"value is a single double-quote character", `KEY="`, "KEY", "\""},
+		{"lone double quote", `KEY="`, "KEY", "\""},
 		{"value with not closed double-quote", `KEY="value`, "KEY", "\"value"},
 		{"space between key name and equal sign", " KEY =value", "KEY", "value"},
 		{"spaces before key name", "   KEY=value", "KEY", "value"},
@@ -354,56 +354,56 @@ func Test_parseLine_interpolation_tabular(t *testing.T) {
 		wVal  string
 	}{
 		{
-			"expands variables found in values",
+			"variable",
 			"BAR=$FOO",
 			map[string]string{"FOO": "test"},
 			"BAR",
 			"test",
 		},
 		{
-			"parses variables wrapped in brackets",
+			"variable in braces",
 			"BAR=${FOO} bar",
 			map[string]string{"FOO": "test"},
 			"BAR",
 			"test bar",
 		},
 		{
-			"expands undefined variables to an empty string",
+			"undefined variable",
 			"BAR=$FOO",
 			map[string]string{},
 			"BAR",
 			"",
 		},
 		{
-			"expands variables in double-quoted strings",
+			"variable in double quotes",
 			`BAR="quote $FOO"`,
 			map[string]string{"FOO": "test"},
 			"BAR",
 			"quote test",
 		},
 		{
-			"does not expand variables in single quoted strings",
+			"variable in single quotes",
 			"BAR='quote $FOO'",
 			map[string]string{},
 			"BAR",
 			"quote $FOO",
 		},
 		{
-			"does not expand escaped variables",
+			"escaped variable",
 			`FOO="foo\$BAR"`,
 			map[string]string{},
 			"FOO",
 			"foo$BAR",
 		},
 		{
-			"does not expand escaped variables",
+			"escaped variable in braces",
 			`FOO="foo\${BAR}"`,
 			map[string]string{},
 			"FOO",
 			"foo${BAR}",
 		},
 		{
-			"does not expand escaped variables",
+			"escaped and not escaped variables",
 			`BAR="foo\\${FOO} ${FOO}"`,
 			map[string]string{"FOO": "test"},
 			"BAR",
@@ -476,7 +476,7 @@ func Test_expandVariables_tabular(t *testing.T) {
 			"BAR=test",
 		},
 		{
-			"simple parameter expansion",
+			"adjacent parameter expansions",
 			"BAR=$FOO$FOO",
 			map[string]string{"FOO": "ABC"},
 			"BAR=ABCABC",
@@ -488,31 +488,31 @@ func Test_expandVariables_tabular(t *testing.T) {
 			"BAR=test bar",
 		},
 		{
-			"expands undefined variables to an empty string",
+			"undefined variable",
 			"BAR=$FOO",
 			map[string]string{},
 			"BAR=",
 		},
 		{
-			"expands variables in double-quoted strings",
+			"variable in double quotes",
 			"BAR=\"quote $FOO\"",
 			map[string]string{"FOO": "test"},
 			`BAR="quote test"`,
 		},
 		{
-			"does not expand escaped variables",
+			"escaped variable",
 			`FOO="foo\$BAR"`,
 			map[string]string{},
 			`FOO="foo$BAR"`,
 		},
 		{
-			"does not expand escaped variables in braces",
+			"escaped variable in braces",
 			`FOO="foo\${BAR}"`,
 			map[string]string{},
 			`FOO="foo${BAR}"`,
 		},
 		{
-			"expand only not escaped variables",
+			"escaped and not escaped variables",
 			"BAR=\"foo\\${FOO} ${FOO}\"",
 			map[string]string{"FOO": "test"},
 			`BAR="foo${FOO} test"`,
@@ -524,25 +524,25 @@ func Test_expandVariables_tabular(t *testing.T) {
 			"$%^&*",
 		},
 		{
-			"command substitution is not expanded",
+			"command substitution",
 			"BAR=$(FOO)",
 			map[string]string{"FOO": "test"},
 			"BAR=$(FOO)",
 		},
 		{
-			"lowercase command substitution is not expanded",
+			"lowercase command substitution",
 			"BAR=$(whoami)",
 			map[string]string{},
 			"BAR=$(whoami)",
 		},
 		{
-			"not closed brace is not expanded",
+			"not closed brace",
 			"BAR=${FOO",
 			map[string]string{"FOO": "test"},
 			"BAR=${FOO",
 		},
 		{
-			"closing brace without opening is kept",
+			"closing brace without opening",
 			"BAR=$FOO}",
 			map[string]string{"FOO": "test"},
 			"BAR=test}",
