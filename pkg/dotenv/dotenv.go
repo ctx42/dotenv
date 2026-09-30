@@ -179,35 +179,45 @@ func extractKey(s string) string {
 	return s
 }
 
-// stripComment removes an inline comment from a line, preserving '#'
-// characters inside a quoted value. A value is quoted only when a quote opens
-// it right after the separator; the quoted span ends at the matching quote,
-// skipping backslash-escaped characters in double quotes. A line with an
-// unclosed quoted value is returned unchanged.
+// stripComment removes an inline comment from a line. In a value, a '#'
+// starts a comment only at the value start or after a space or tab, so
+// "p#ss" is kept. A '#' inside a quoted value is kept too: a value is quoted
+// only when a quote opens it right after the separator, and the quoted span
+// ends at the matching quote, skipping backslash-escaped characters in double
+// quotes. A line with an unclosed quoted value is returned unchanged.
 func stripComment(lin string) string {
-	from := 0
 	sep := strings.IndexAny(lin, "=:#")
-	if sep != -1 && lin[sep] != '#' {
-		from = sep + 1
-		for from < len(lin) && (lin[from] == ' ' || lin[from] == '\t') {
-			from++
-		}
-		if from < len(lin) && (lin[from] == '"' || lin[from] == '\'') {
-			quote := lin[from]
-			from++
-			for from < len(lin) && lin[from] != quote {
-				if quote == '"' && lin[from] == '\\' {
-					from++
-				}
+	if sep == -1 {
+		return lin
+	}
+	if lin[sep] == '#' {
+		return strings.TrimRight(lin[:sep], " \t")
+	}
+	from := sep + 1
+	for from < len(lin) && (lin[from] == ' ' || lin[from] == '\t') {
+		from++
+	}
+	if from < len(lin) && (lin[from] == '"' || lin[from] == '\'') {
+		quote := lin[from]
+		from++
+		for from < len(lin) && lin[from] != quote {
+			if quote == '"' && lin[from] == '\\' {
 				from++
 			}
-			if from >= len(lin) {
-				return lin
-			}
+			from++
 		}
+		if from >= len(lin) {
+			return lin
+		}
+		from++ // Past the closing quote.
 	}
-	if idx := strings.IndexByte(lin[from:], '#'); idx != -1 {
-		return strings.TrimRight(lin[:from+idx], " \t")
+	for i := from; i < len(lin); i++ {
+		if lin[i] != '#' {
+			continue
+		}
+		if i == from || lin[i-1] == ' ' || lin[i-1] == '\t' {
+			return strings.TrimRight(lin[:i], " \t")
+		}
 	}
 	return lin
 }

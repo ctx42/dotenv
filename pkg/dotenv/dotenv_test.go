@@ -748,14 +748,18 @@ func Test_stripComment_tabular(t *testing.T) {
 		{"no hash", "FOO=bar", "FOO=bar"},
 		{"inline comment", "FOO=bar # comment", "FOO=bar"},
 		{
-			"inline comment no space before hash",
+			"hash without space before",
 			"FOO=bar# comment",
-			"FOO=bar",
+			"FOO=bar# comment",
 		},
+		{"trailing hash", "FOO=bar#", "FOO=bar#"},
+		{"hash in password", "PASS=p#ss # comment", "PASS=p#ss"},
+		{"hash in url", "URL=http://h/#frag", "URL=http://h/#frag"},
+		{"hash starting value", "FOO=#comment", "FOO="},
 		{
-			"inline comment no space or text after hash",
-			"FOO=bar#",
-			"FOO=bar",
+			"hash right after quoted value",
+			`FOO="a"# comment`,
+			`FOO="a"`,
 		},
 		{
 			"multiple spaces before hash",
@@ -834,6 +838,7 @@ func Test_stripComment_tabular(t *testing.T) {
 			`FOO: "a#b"`,
 		},
 		{"hash in not closed double-quote", `FOO="a # b`, `FOO="a # b`},
+		{"key only comment", "FOO # comment", "FOO"},
 	}
 
 	for _, tc := range tt {
