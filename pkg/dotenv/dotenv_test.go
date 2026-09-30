@@ -220,85 +220,6 @@ func Test_Parse(t *testing.T) {
 	})
 }
 
-func Test_parseLine_interpolation(t *testing.T) {
-	tt := []struct {
-		testN string
-		line  string
-		with  map[string]string
-		wKey  string
-		wVal  string
-	}{
-		{
-			"expands variables found in values",
-			"BAR=$FOO",
-			map[string]string{"FOO": "test"},
-			"BAR",
-			"test",
-		},
-		{
-			"parses variables wrapped in brackets",
-			"BAR=${FOO} bar",
-			map[string]string{"FOO": "test"},
-			"BAR",
-			"test bar",
-		},
-		{
-			"expands undefined variables to an empty string",
-			"BAR=$FOO",
-			map[string]string{},
-			"BAR",
-			"",
-		},
-		{
-			"expands variables in double-quoted strings",
-			`BAR="quote $FOO"`,
-			map[string]string{"FOO": "test"},
-			"BAR",
-			"quote test",
-		},
-		{
-			"does not expand variables in single quoted strings",
-			"BAR='quote $FOO'",
-			map[string]string{},
-			"BAR",
-			"quote $FOO",
-		},
-		{
-			"does not expand escaped variables",
-			`FOO="foo\$BAR"`,
-			map[string]string{},
-			"FOO",
-			"foo$BAR",
-		},
-		{
-			"does not expand escaped variables",
-			`FOO="foo\${BAR}"`,
-			map[string]string{},
-			"FOO",
-			"foo${BAR}",
-		},
-		{
-			"does not expand escaped variables",
-			`BAR="foo\\${FOO} ${FOO}"`,
-			map[string]string{"FOO": "test"},
-			"BAR",
-			"foo${FOO} test",
-		},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
-			// --- When ---
-			hKey, hVal, err := parseLine(123, tc.line, tc.with)
-
-			// --- Then ---
-			assert.NoError(t, err)
-			assert.Equal(t, tc.wKey, hKey)
-			assert.Equal(t, tc.wVal, hVal)
-		})
-	}
-}
-
 func Test_parseLine(t *testing.T) {
 	tt := []struct {
 		testN string
@@ -420,6 +341,85 @@ func Test_parseLine(t *testing.T) {
 			assert.Equal(t, tc.wKey, hKey)
 			assert.Equal(t, tc.wVal, hVal)
 			assert.Len(t, 0, m)
+		})
+	}
+}
+
+func Test_parseLine_interpolation(t *testing.T) {
+	tt := []struct {
+		testN string
+		line  string
+		with  map[string]string
+		wKey  string
+		wVal  string
+	}{
+		{
+			"expands variables found in values",
+			"BAR=$FOO",
+			map[string]string{"FOO": "test"},
+			"BAR",
+			"test",
+		},
+		{
+			"parses variables wrapped in brackets",
+			"BAR=${FOO} bar",
+			map[string]string{"FOO": "test"},
+			"BAR",
+			"test bar",
+		},
+		{
+			"expands undefined variables to an empty string",
+			"BAR=$FOO",
+			map[string]string{},
+			"BAR",
+			"",
+		},
+		{
+			"expands variables in double-quoted strings",
+			`BAR="quote $FOO"`,
+			map[string]string{"FOO": "test"},
+			"BAR",
+			"quote test",
+		},
+		{
+			"does not expand variables in single quoted strings",
+			"BAR='quote $FOO'",
+			map[string]string{},
+			"BAR",
+			"quote $FOO",
+		},
+		{
+			"does not expand escaped variables",
+			`FOO="foo\$BAR"`,
+			map[string]string{},
+			"FOO",
+			"foo$BAR",
+		},
+		{
+			"does not expand escaped variables",
+			`FOO="foo\${BAR}"`,
+			map[string]string{},
+			"FOO",
+			"foo${BAR}",
+		},
+		{
+			"does not expand escaped variables",
+			`BAR="foo\\${FOO} ${FOO}"`,
+			map[string]string{"FOO": "test"},
+			"BAR",
+			"foo${FOO} test",
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			hKey, hVal, err := parseLine(123, tc.line, tc.with)
+
+			// --- Then ---
+			assert.NoError(t, err)
+			assert.Equal(t, tc.wKey, hKey)
+			assert.Equal(t, tc.wVal, hVal)
 		})
 	}
 }
@@ -566,6 +566,32 @@ func Test_expandVariables_tabular(t *testing.T) {
 	}
 }
 
+func Test_isIgnoredLine(t *testing.T) {
+	tt := []struct {
+		testN string
+
+		lin  string
+		want bool
+	}{
+		{"newline linux", "\n", true},
+		{"newline windows", "\r\n", true},
+		{"tabs", "\t\t", true},
+		{"comment line", "# comment", true},
+		{"tab and comment", "\t# comment", true},
+		{"export line", `export OPTION_B='\n'`, false},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			have := isIgnoredLine(tc.lin)
+
+			// --- Then ---
+			assert.Equal(t, tc.want, have)
+		})
+	}
+}
+
 func Test_extractKey_tabular(t *testing.T) {
 	tt := []struct {
 		testN string
@@ -682,32 +708,6 @@ func Test_stripComment_tabular(t *testing.T) {
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- When ---
 			have := stripComment(tc.lin)
-
-			// --- Then ---
-			assert.Equal(t, tc.want, have)
-		})
-	}
-}
-
-func Test_isIgnoredLine(t *testing.T) {
-	tt := []struct {
-		testN string
-
-		lin  string
-		want bool
-	}{
-		{"newline linux", "\n", true},
-		{"newline windows", "\r\n", true},
-		{"tabs", "\t\t", true},
-		{"comment line", "# comment", true},
-		{"tab and comment", "\t# comment", true},
-		{"export line", `export OPTION_B='\n'`, false},
-	}
-
-	for _, tc := range tt {
-		t.Run(tc.testN, func(t *testing.T) {
-			// --- When ---
-			have := isIgnoredLine(tc.lin)
 
 			// --- Then ---
 			assert.Equal(t, tc.want, have)
