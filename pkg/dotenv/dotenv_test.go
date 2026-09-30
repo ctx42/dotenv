@@ -431,12 +431,24 @@ func Test_parseLine_error_tabular(t *testing.T) {
 		lin  string
 		want string
 	}{
-		{"line with invalid format", "lol$wut", "invalid config line: 0"},
-		{"empty line", "", "invalid config line: 1"},
-		{"empty key", `="value"`, "invalid config line: 2"},
-		{"space in key", "MY KEY=value", "invalid config line: 3"},
-		{"tab in key", "MY\tKEY=value", "invalid config line: 4"},
-		{"space in exported key", "export MY KEY=v", "invalid config line: 5"},
+		{"error - invalid format", "lol$wut", "invalid config line: 0"},
+		{"error - empty line", "", "invalid config line: 1"},
+		{"error - empty key", `="value"`, "invalid config line: 2"},
+		{
+			"error - space in key",
+			"MY KEY=value",
+			"invalid config line: 3",
+		},
+		{
+			"error - tab in key",
+			"MY\tKEY=value",
+			"invalid config line: 4",
+		},
+		{
+			"error - space in exported key",
+			"export MY KEY=v",
+			"invalid config line: 5",
+		},
 	}
 
 	for n, tc := range tt {
