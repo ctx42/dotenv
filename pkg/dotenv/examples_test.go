@@ -36,7 +36,7 @@ WORLD=world
 func ExampleParse_comments() {
 	file := `
 # Comment.
-QUOTED="a # b # c #" 
+QUOTED="a # b # c #"
 AFTER_SPACE=world # Comment.
 `
 
@@ -57,7 +57,7 @@ AFTER_SPACE=world # Comment.
 
 func ExampleParse_variableExpansion() {
 	file := `
-HELLO=hello 
+HELLO=hello
 WORLD=world
 MESSAGE="${HELLO} ${WORLD}!"
 `
@@ -76,7 +76,7 @@ MESSAGE="${HELLO} ${WORLD}!"
 
 func ExampleParse_variableExpansionFromEnvironment() {
 	file := `
-HELLO=hello 
+HELLO=hello
 WORLD=world
 MESSAGE="${HELLO} ${WORLD}${EXCLAIM}"
 `
