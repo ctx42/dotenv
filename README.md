@@ -1,8 +1,8 @@
-# dotenv: Parse .env files for Go
-
 [![Go Report Card](https://goreportcard.com/badge/github.com/ctx42/dotenv)](https://goreportcard.com/report/github.com/ctx42/dotenv)
 [![GoDoc](https://img.shields.io/badge/api-Godoc-blue.svg)](https://pkg.go.dev/github.com/ctx42/dotenv)
-![Tests](https://github.com/ctx42/dotenv/actions/workflows/go.yml/badge.svg?branch=master)
+[![Tests](https://github.com/ctx42/dotenv/actions/workflows/go.yml/badge.svg?branch=master)](https://github.com/ctx42/dotenv/actions/workflows/go.yml)
+
+# dotenv: Parse .env files for Go
 
 <!-- TOC -->
 * [dotenv: Parse .env files for Go](#dotenv-parse-env-files-for-go)
