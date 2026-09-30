@@ -249,7 +249,8 @@ byte pairs into single characters:
 - `\"` - becomes a double quote
 - `\'` - becomes a single quote
 - `\\` - becomes a backslash
-- `\uABCD` inserts a Unicode character (four hex digits)
+- `\uABCD` inserts a Unicode character (four hex digits); a UTF-16 surrogate
+  pair such as `\uD83D\uDE00` inserts one character
 
 If a backslash precedes any other character, the backslash is removed, and the
 character is retained as is.

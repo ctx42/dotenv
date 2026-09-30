@@ -637,6 +637,14 @@ func Test_decodeDoubleQuoted_tabular(t *testing.T) {
 		{"unicode uppercase hex", `\u00C9`, "\u00c9"},
 		{"unicode too short", `\u12`, "u12"},
 		{"unicode not hex", `\uZZZZ`, "uZZZZ"},
+		{"surrogate pair", `\uD83D\uDE00`, "\U0001F600"},
+		{"lone high surrogate", `\uD83Dx`, "\uFFFDx"},
+		{
+			"high surrogate before non-surrogate",
+			`\uD83D\u0041`,
+			"\uFFFDA",
+		},
+		{"lone low surrogate", `\uDE00`, "\uFFFD"},
 		{"other character", `\a`, "a"},
 		{"multi-byte character", `\` + "\u00e9", "\u00e9"},
 		{"trailing backslash", `a\`, `a\`},
@@ -659,6 +667,34 @@ func Test_decodeDoubleQuoted_tabular(t *testing.T) {
 
 			// --- Then ---
 			assert.Equal(t, tc.want, have)
+		})
+	}
+}
+
+func Test_hexRune_tabular(t *testing.T) {
+	tt := []struct {
+		testN string
+
+		s     string
+		wRune rune
+		wOK   bool
+	}{
+		{"lowercase hex", "00e9", 0xe9, true},
+		{"uppercase hex", "00C9", 0xc9, true},
+		{"only first four digits", "00410", 0x41, true},
+		{"too short", "12", 0, false},
+		{"not hex", "ZZZZ", 0, false},
+		{"sign", "+123", 0, false},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			hRune, hOK := hexRune(tc.s)
+
+			// --- Then ---
+			assert.Equal(t, tc.wRune, hRune)
+			assert.Equal(t, tc.wOK, hOK)
 		})
 	}
 }

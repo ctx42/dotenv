@@ -12,6 +12,8 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"unicode/utf16"
+	"unicode/utf8"
 )
 
 // maxLineSize is the longest line, in bytes, [Parse] accepts.
@@ -131,7 +133,8 @@ func escapedAt(s string, i int) bool {
 // decodeDoubleQuoted decodes a double-quoted value in one pass: it expands
 // variable references with values from m and decodes backslash escapes.
 // "\n", "\r", "\t", "\f", "\b", and "\uABCD" become the characters they
-// name, "\$" is a literal "$", and any other escaped character is kept
+// name (a UTF-16 surrogate pair of two such escapes becomes one character),
+// "\$" is a literal "$", and any other escaped character is kept
 // without the backslash, so "\\$NAME" is a backslash followed by the value
 // of NAME.
 func decodeDoubleQuoted(val string, m map[string]string) string {
@@ -168,21 +171,39 @@ func decodeDoubleQuoted(val string, m map[string]string) string {
 		case 'b':
 			buf.WriteByte('\b')
 		case 'u':
-			if i+5 <= len(val) {
-				hex := val[i+1 : i+5]
-				code, err := strconv.ParseUint(hex, 16, 16)
-				if err == nil {
-					buf.WriteRune(rune(code))
-					i += 4
-					continue
+			r, ok := hexRune(val[i+1:])
+			if !ok {
+				buf.WriteByte(c)
+				continue
+			}
+			i += 4
+			rest, found := strings.CutPrefix(val[i+1:], `\u`)
+			if found && utf16.IsSurrogate(r) {
+				low, ok := hexRune(rest)
+				pair := utf16.DecodeRune(r, low)
+				if ok && pair != utf8.RuneError {
+					r = pair
+					i += 6
 				}
 			}
-			buf.WriteByte(c)
+			buf.WriteRune(r)
 		default:
 			buf.WriteByte(c)
 		}
 	}
 	return buf.String()
+}
+
+// hexRune parses the four hex digits at the start of s as a rune.
+func hexRune(s string) (rune, bool) {
+	if len(s) < 4 {
+		return 0, false
+	}
+	code, err := strconv.ParseUint(s[:4], 16, 16)
+	if err != nil {
+		return 0, false
+	}
+	return rune(code), true
 }
 
 // expandVariables replaces variable references in src with their values
