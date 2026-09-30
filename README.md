@@ -29,6 +29,12 @@ To use `dotenv` in your Go project, install it with:
 go get github.com/ctx42/dotenv
 ```
 
+Then import the package:
+
+```go
+import "github.com/ctx42/dotenv/pkg/dotenv"
+```
+
 ## Usage
 
 The library offers a single function, Parse, which reads dotenv-formatted
