@@ -180,6 +180,34 @@ func Test_Parse(t *testing.T) {
 		assert.Equal(t, map[string]string{"KEY": val}, have)
 	})
 
+	t.Run("byte order mark", func(t *testing.T) {
+		// --- Given ---
+		have := map[string]string{}
+
+		rdr := strings.NewReader("\ufeffKEY=value")
+
+		// --- When ---
+		err := Parse(have, rdr)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]string{"KEY": "value"}, have)
+	})
+
+	t.Run("byte order mark before comment", func(t *testing.T) {
+		// --- Given ---
+		have := map[string]string{}
+
+		rdr := strings.NewReader("\ufeff# comment\nKEY=value")
+
+		// --- When ---
+		err := Parse(have, rdr)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]string{"KEY": "value"}, have)
+	})
+
 	t.Run("error - invalid content on line 1", func(t *testing.T) {
 		// --- Given ---
 		have := map[string]string{}

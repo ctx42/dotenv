@@ -52,6 +52,10 @@ func Parse(m map[string]string, r io.Reader) error {
 	for scn.Scan() {
 		n++
 		lin := scn.Text()
+		if n == 1 {
+			// Drop the UTF-8 byte order mark some editors write.
+			lin = strings.TrimPrefix(lin, "\ufeff")
+		}
 		if isIgnoredLine(lin) {
 			continue
 		}
