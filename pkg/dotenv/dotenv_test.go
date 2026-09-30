@@ -420,6 +420,16 @@ func Test_parseLine_tabular(t *testing.T) {
 			"FOO",
 			"it's",
 		},
+		{"tab escape", `FOO="a\tb"`, "FOO", "a\tb"},
+		{
+			"form feed and backspace escapes",
+			`FOO="a\fb\bc"`,
+			"FOO",
+			"a\fb\bc",
+		},
+		{"unicode escape", `FOO="caf\u00e9"`, "FOO", "caf\u00e9"},
+		{"invalid unicode escape", `FOO="\u12"`, "FOO", "u12"},
+		{"escaped single quote", `FOO="it\'s"`, "FOO", "it's"},
 		{"lone double quote", `KEY="`, "KEY", "\""},
 		{
 			"value with not closed double-quote",
@@ -561,6 +571,44 @@ func Test_parseLine_error_tabular(t *testing.T) {
 			assert.ErrorEqual(t, want, err)
 			assert.Equal(t, "", hKey)
 			assert.Equal(t, "", hVal)
+		})
+	}
+}
+
+func Test_unescape_tabular(t *testing.T) {
+	tt := []struct {
+		testN string
+
+		val  string
+		want string
+	}{
+		{"no escapes", "abc", "abc"},
+		{"newline", `a\nb`, "a\nb"},
+		{"carriage return", `a\rb`, "a\rb"},
+		{"tab", `a\tb`, "a\tb"},
+		{"form feed", `a\fb`, "a\fb"},
+		{"backspace", `a\bb`, "a\bb"},
+		{"double quote", `a\"b`, `a"b`},
+		{"single quote", `a\'b`, "a'b"},
+		{"backslash", `a\\b`, `a\b`},
+		{"escaped backslash before n", `a\\nb`, `a\nb`},
+		{"dollar is kept escaped", `a\$B`, `a\$B`},
+		{"unicode", `caf\u00e9`, "caf\u00e9"},
+		{"unicode uppercase hex", `\u00C9`, "\u00c9"},
+		{"unicode too short", `\u12`, "u12"},
+		{"unicode not hex", `\uZZZZ`, "uZZZZ"},
+		{"other character", `\a`, "a"},
+		{"multi-byte character", `\` + "\u00e9", "\u00e9"},
+		{"trailing backslash", `a\`, `a\`},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			have := unescape(tc.val)
+
+			// --- Then ---
+			assert.Equal(t, tc.want, have)
 		})
 	}
 }

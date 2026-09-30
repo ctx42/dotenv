@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -28,8 +29,6 @@ var (
 )
 
 var (
-	escapeRX        = regexp.MustCompile(`\\.`)
-	unescapeCharsRX = regexp.MustCompile(`\\([^$])`)
 	// Matches an escaped "\$", a "$(", "${NAME}", or "$NAME". Names are
 	// uppercase-only by convention: .env files use SCREAMING_SNAKE_CASE
 	// keys.
@@ -117,21 +116,7 @@ func parseValue(val string, m map[string]string) string {
 	}
 
 	if isDouble {
-		// Expand newlines.
-		expand := func(match string) string {
-			c := strings.TrimPrefix(match, `\`)
-			switch c {
-			case "n":
-				return "\n"
-			case "r":
-				return "\r"
-			default:
-				return match
-			}
-		}
-		val = escapeRX.ReplaceAllStringFunc(val, expand)
-		// Unescape characters.
-		val = unescapeCharsRX.ReplaceAllString(val, "$1")
+		val = unescape(val)
 	}
 
 	if !isSingle && strings.Contains(val, "$") {
@@ -139,6 +124,53 @@ func parseValue(val string, m map[string]string) string {
 	}
 
 	return val
+}
+
+// unescape decodes backslash escape sequences in a double-quoted value:
+// "\n", "\r", "\t", "\f", "\b", and "\uABCD" become the characters they name;
+// any other escaped character is kept without the backslash. An escaped "$"
+// is kept escaped for expandVariables.
+func unescape(val string) string {
+	if !strings.Contains(val, `\`) {
+		return val
+	}
+	var buf strings.Builder
+	buf.Grow(len(val))
+	for i := 0; i < len(val); i++ {
+		if val[i] != '\\' || i+1 == len(val) {
+			buf.WriteByte(val[i])
+			continue
+		}
+		i++
+		switch c := val[i]; c {
+		case 'n':
+			buf.WriteByte('\n')
+		case 'r':
+			buf.WriteByte('\r')
+		case 't':
+			buf.WriteByte('\t')
+		case 'f':
+			buf.WriteByte('\f')
+		case 'b':
+			buf.WriteByte('\b')
+		case '$':
+			buf.WriteString(`\$`)
+		case 'u':
+			if i+5 <= len(val) {
+				hex := val[i+1 : i+5]
+				code, err := strconv.ParseUint(hex, 16, 16)
+				if err == nil {
+					buf.WriteRune(rune(code))
+					i += 4
+					continue
+				}
+			}
+			buf.WriteByte(c)
+		default:
+			buf.WriteByte(c)
+		}
+	}
+	return buf.String()
 }
 
 // expandVariables replaces variable references in src with their values
