@@ -84,6 +84,9 @@ func parseLine(n int, lin string, m map[string]string) (string, string, error) {
 	}
 
 	key := extractKey(lin[:sepIdx])
+	if key == "" || strings.ContainsAny(key, " \t") {
+		return "", "", fmt.Errorf("%w: %d", ErrInvLine, n)
+	}
 	val := parseValue(lin[sepIdx+1:], m)
 	return key, val, nil
 }

@@ -400,7 +400,6 @@ func Test_parseLine(t *testing.T) {
 			`a"b`,
 		},
 		{"apostrophe and a line comment", "FOO=it's # note", "FOO", "it's"},
-		{"line without a key name and with a value", `="value"`, "", "value"},
 		{"value is a single double-quote character", `KEY="`, "KEY", "\""},
 		{"value with not closed double-quote", `KEY="value`, "KEY", "\"value"},
 		{"space between key name and equal sign", " KEY =value", "KEY", "value"},
@@ -434,6 +433,10 @@ func Test_parseLine_error(t *testing.T) {
 	}{
 		{"line with invalid format", "lol$wut", "invalid config line: 0"},
 		{"empty line", "", "invalid config line: 1"},
+		{"empty key", `="value"`, "invalid config line: 2"},
+		{"space in key", "MY KEY=value", "invalid config line: 3"},
+		{"tab in key", "MY\tKEY=value", "invalid config line: 4"},
+		{"space in exported key", "export MY KEY=v", "invalid config line: 5"},
 	}
 
 	for n, tc := range tt {
