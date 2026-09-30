@@ -40,23 +40,17 @@ export EXPORTED_VAR=exported_value
 export ANOTHER_VAR='another value'
 `
 
-// sinkMap prevents the compiler from eliminating benchmark work.
-var sinkMap map[string]string
-
 func BenchmarkParse(b *testing.B) {
 	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		m := make(map[string]string)
-		_ = Parse(m, strings.NewReader(benchEnvFile))
-		sinkMap = m
+	for b.Loop() {
+		_ = Parse(map[string]string{}, strings.NewReader(benchEnvFile))
 	}
 }
 
 func BenchmarkParseLine(b *testing.B) {
-	cases := []struct {
-		name string
-		line string
+	tt := []struct {
+		testN string
+		line  string
 	}{
 		{"bare", "KEY=value"},
 		{"single_quoted", "KEY='single quoted value'"},
@@ -67,11 +61,10 @@ func BenchmarkParseLine(b *testing.B) {
 	}
 
 	m := map[string]string{"OTHER": "expanded"}
-	for _, tc := range cases {
-		b.Run(tc.name, func(b *testing.B) {
+	for _, tc := range tt {
+		b.Run(tc.testN, func(b *testing.B) {
 			b.ReportAllocs()
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
+			for b.Loop() {
 				_, _, _ = parseLine(1, tc.line, m)
 			}
 		})
@@ -79,8 +72,8 @@ func BenchmarkParseLine(b *testing.B) {
 }
 
 func BenchmarkExpandVariables(b *testing.B) {
-	cases := []struct {
-		name  string
+	tt := []struct {
+		testN string
 		input string
 		env   map[string]string
 	}{
@@ -101,15 +94,12 @@ func BenchmarkExpandVariables(b *testing.B) {
 		},
 	}
 
-	var sinkS string
-	for _, tc := range cases {
-		b.Run(tc.name, func(b *testing.B) {
+	for _, tc := range tt {
+		b.Run(tc.testN, func(b *testing.B) {
 			b.ReportAllocs()
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				sinkS = expandVariables(tc.input, tc.env)
+			for b.Loop() {
+				_ = expandVariables(tc.input, tc.env)
 			}
 		})
 	}
-	_ = sinkS
 }
