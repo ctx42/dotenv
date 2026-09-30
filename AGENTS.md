@@ -35,16 +35,24 @@ The library exposes two public symbols:
 
 Internal parsing pipeline:
 ```
-Parse → isIgnoredLine (skip blank/comment lines)
+Parse → strip UTF-8 BOM (first line only)
+      → isIgnoredLine (skip blank/comment lines)
       → parseLine
-          ├─ hash-stripping (respects open quotes)
-          ├─ key extraction via exportRX (strips leading `export`)
+          ├─ stripComment (`#` after whitespace, outside a leading quote)
+          ├─ separator: first `=` or `:`
+          ├─ extractKey (strips leading `export`); empty or whitespace key
+          │  → ErrInvLine
           └─ parseValue
-               ├─ single quotes  → raw, no expansion
-               ├─ double quotes  → escape sequences (\n \r) + variable expansion
-               └─ unquoted       → variable expansion only
-                    └─ expandVariables (expandVarRX: $VAR and ${VAR})
+               ├─ single quotes  → raw, no escapes, no expansion
+               ├─ double quotes  → decodeDoubleQuoted: escapes
+               │                   (\n \r \t \f \b \uXXXX) + expansion
+               │                   in one pass
+               └─ unquoted       → expandVariables (only `\$` escape)
 ```
+
+Both expansion paths resolve `$NAME` and `${NAME}` with `varRef`; names are
+uppercase letters, digits, and underscores (`nameLen`), and `$(...)` is kept
+verbatim.
 
 Variable expansion operates against the map `m` passed to `Parse`. Variables
 defined earlier in the same file are already in `m` by the time later lines
