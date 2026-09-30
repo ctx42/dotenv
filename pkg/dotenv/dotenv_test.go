@@ -196,6 +196,28 @@ func Test_Parse(t *testing.T) {
 		assert.Equal(t, "dotenv: test error", err.Error())
 		assert.Equal(t, 0, len(have))
 	})
+
+	t.Run("error - nil map with empty input", func(t *testing.T) {
+		// --- Given ---
+		rdr := strings.NewReader("")
+
+		// --- When ---
+		err := Parse(nil, rdr)
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrNilMap, err)
+	})
+
+	t.Run("error - nil map", func(t *testing.T) {
+		// --- Given ---
+		rdr := strings.NewReader("FOO=bar")
+
+		// --- When ---
+		err := Parse(nil, rdr)
+
+		// --- Then ---
+		assert.ErrorIs(t, ErrNilMap, err)
+	})
 }
 
 func Test_parseLine_interpolation(t *testing.T) {

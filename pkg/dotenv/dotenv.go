@@ -14,8 +14,15 @@ import (
 	"strings"
 )
 
-// ErrInvLine is returned when a line cannot be parsed as a key=value pair.
-var ErrInvLine = errors.New("invalid config line")
+// Sentinel errors.
+var (
+	// ErrInvLine is returned when a line cannot be parsed as a key=value
+	// pair.
+	ErrInvLine = errors.New("invalid config line")
+
+	// ErrNilMap is returned by [Parse] when given a nil map.
+	ErrNilMap = errors.New("nil map")
+)
 
 var (
 	escapeRX        = regexp.MustCompile(`\\.`)
@@ -31,7 +38,11 @@ var (
 // Parse reads dotenv format configuration from r into m. Keys present in m
 // before the call are overwritten by keys read from r, which is the intended
 // mechanism for pre-seeding the map with environment variables via [Split].
+// Returns [ErrNilMap] when m is nil.
 func Parse(m map[string]string, r io.Reader) error {
+	if m == nil {
+		return ErrNilMap
+	}
 	scn := bufio.NewScanner(r)
 	n := 0
 	for scn.Scan() {
