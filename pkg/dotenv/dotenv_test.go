@@ -522,11 +522,18 @@ func Test_parseLine_interpolation_tabular(t *testing.T) {
 			"foo${BAR}",
 		},
 		{
-			"escaped and not escaped variables",
+			"escaped backslash before variables",
 			`BAR="foo\\${FOO} ${FOO}"`,
 			map[string]string{"FOO": "test"},
 			"BAR",
-			"foo${FOO} test",
+			`foo\test test`,
+		},
+		{
+			"escaped backslash before escaped variable",
+			`BAR="foo\\\$FOO"`,
+			map[string]string{"FOO": "test"},
+			"BAR",
+			`foo\$FOO`,
 		},
 	}
 
@@ -575,7 +582,7 @@ func Test_parseLine_error_tabular(t *testing.T) {
 	}
 }
 
-func Test_unescape_tabular(t *testing.T) {
+func Test_decodeDoubleQuoted_tabular(t *testing.T) {
 	tt := []struct {
 		testN string
 
@@ -592,7 +599,6 @@ func Test_unescape_tabular(t *testing.T) {
 		{"single quote", `a\'b`, "a'b"},
 		{"backslash", `a\\b`, `a\b`},
 		{"escaped backslash before n", `a\\nb`, `a\nb`},
-		{"dollar is kept escaped", `a\$B`, `a\$B`},
 		{"unicode", `caf\u00e9`, "caf\u00e9"},
 		{"unicode uppercase hex", `\u00C9`, "\u00c9"},
 		{"unicode too short", `\u12`, "u12"},
@@ -600,12 +606,22 @@ func Test_unescape_tabular(t *testing.T) {
 		{"other character", `\a`, "a"},
 		{"multi-byte character", `\` + "\u00e9", "\u00e9"},
 		{"trailing backslash", `a\`, `a\`},
+		{"variable", "a $FOO", "a test"},
+		{"variable in braces", "a${FOO}b", "atestb"},
+		{"undefined variable", "a $BAR", "a "},
+		{"escaped dollar", `a\$FOO`, "a$FOO"},
+		{"escaped backslash before variable", `a\\$FOO`, `a\test`},
+		{"lone dollar", "a $ b", "a $ b"},
+		{"command substitution", "$(FOO)", "$(FOO)"},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.testN, func(t *testing.T) {
+			// --- Given ---
+			m := map[string]string{"FOO": "test"}
+
 			// --- When ---
-			have := unescape(tc.val)
+			have := decodeDoubleQuoted(tc.val, m)
 
 			// --- Then ---
 			assert.Equal(t, tc.want, have)
@@ -711,6 +727,64 @@ func Test_expandVariables_tabular(t *testing.T) {
 		t.Run(tc.testN, func(t *testing.T) {
 			// --- When ---
 			have := expandVariables(tc.input, tc.with)
+
+			// --- Then ---
+			assert.Equal(t, tc.want, have)
+		})
+	}
+}
+
+func Test_varRef_tabular(t *testing.T) {
+	tt := []struct {
+		testN string
+
+		s     string
+		wName string
+		wLen  int
+	}{
+		{"name", "$FOO", "FOO", 4},
+		{"name followed by text", "$FOO bar", "FOO", 4},
+		{"name in braces", "${FOO}bar", "FOO", 6},
+		{"lowercase name", "$foo", "", 0},
+		{"lone dollar", "$", "", 0},
+		{"dollar before space", "$ FOO", "", 0},
+		{"command substitution", "$(FOO)", "", 0},
+		{"empty braces", "${}", "", 0},
+		{"not closed brace", "${FOO", "", 0},
+		{"space in braces", "${FO O}", "", 0},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			hName, hLen := varRef(tc.s)
+
+			// --- Then ---
+			assert.Equal(t, tc.wName, hName)
+			assert.Equal(t, tc.wLen, hLen)
+		})
+	}
+}
+
+func Test_nameLen_tabular(t *testing.T) {
+	tt := []struct {
+		testN string
+
+		s    string
+		want int
+	}{
+		{"empty", "", 0},
+		{"uppercase letters", "FOO", 3},
+		{"digits and underscore", "A_1", 3},
+		{"stops at lowercase", "FOOd", 3},
+		{"stops at space", "FOO BAR", 3},
+		{"lowercase start", "foo", 0},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			have := nameLen(tc.s)
 
 			// --- Then ---
 			assert.Equal(t, tc.want, have)

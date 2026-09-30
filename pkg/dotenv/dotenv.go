@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -26,15 +25,6 @@ var (
 
 	// ErrNilMap is returned by [Parse] when given a nil map.
 	ErrNilMap = errors.New("dotenv: nil map")
-)
-
-var (
-	// Matches an escaped "\$", a "$(", "${NAME}", or "$NAME". Names are
-	// uppercase-only by convention: .env files use SCREAMING_SNAKE_CASE
-	// keys.
-	expandVarRX = regexp.MustCompile(
-		`\\\$|\$\(|\$\{[A-Z0-9_]+\}|\$[A-Z0-9_]+`,
-	)
 )
 
 // Parse reads dotenv format configuration from r into m. Keys present in m
@@ -115,28 +105,40 @@ func parseValue(val string, m map[string]string) string {
 		val = val[1 : len(val)-1]
 	}
 
-	if isDouble {
-		val = unescape(val)
+	switch {
+	case isSingle:
+		return val
+	case isDouble:
+		return decodeDoubleQuoted(val, m)
+	case strings.Contains(val, "$"):
+		return expandVariables(val, m)
 	}
-
-	if !isSingle && strings.Contains(val, "$") {
-		val = expandVariables(val, m)
-	}
-
 	return val
 }
 
-// unescape decodes backslash escape sequences in a double-quoted value:
-// "\n", "\r", "\t", "\f", "\b", and "\uABCD" become the characters they name;
-// any other escaped character is kept without the backslash. An escaped "$"
-// is kept escaped for expandVariables.
-func unescape(val string) string {
-	if !strings.Contains(val, `\`) {
+// decodeDoubleQuoted decodes a double-quoted value in one pass: it expands
+// variable references with values from m and decodes backslash escapes.
+// "\n", "\r", "\t", "\f", "\b", and "\uABCD" become the characters they
+// name, "\$" is a literal "$", and any other escaped character is kept
+// without the backslash, so "\\$NAME" is a backslash followed by the value
+// of NAME.
+func decodeDoubleQuoted(val string, m map[string]string) string {
+	if !strings.ContainsAny(val, `\$`) {
 		return val
 	}
 	var buf strings.Builder
 	buf.Grow(len(val))
 	for i := 0; i < len(val); i++ {
+		if val[i] == '$' {
+			name, n := varRef(val[i:])
+			if n == 0 {
+				buf.WriteByte('$')
+				continue
+			}
+			buf.WriteString(m[name])
+			i += n - 1
+			continue
+		}
 		if val[i] != '\\' || i+1 == len(val) {
 			buf.WriteByte(val[i])
 			continue
@@ -153,8 +155,6 @@ func unescape(val string) string {
 			buf.WriteByte('\f')
 		case 'b':
 			buf.WriteByte('\b')
-		case '$':
-			buf.WriteString(`\$`)
 		case 'u':
 			if i+5 <= len(val) {
 				hex := val[i+1 : i+5]
@@ -174,22 +174,65 @@ func unescape(val string) string {
 }
 
 // expandVariables replaces variable references in src with their values
-// from m. In the example below, "${OPTION_A}" expands to "1".
+// from m; "\$" is a literal "$". In the example below, "${OPTION_A}" expands
+// to "1".
 //
 //	OPTION_A=1
 //	OPTION_B=${OPTION_A}
 func expandVariables(src string, m map[string]string) string {
-	repl := func(s string) string {
-		switch s {
-		case `\$`:
-			return "$"
-		case "$(":
-			// Keep unsupported command substitution verbatim.
-			return s
+	var buf strings.Builder
+	buf.Grow(len(src))
+	for i := 0; i < len(src); i++ {
+		switch {
+		case src[i] == '\\' && i+1 < len(src) && src[i+1] == '$':
+			buf.WriteByte('$')
+			i++
+		case src[i] == '$':
+			name, n := varRef(src[i:])
+			if n == 0 {
+				buf.WriteByte('$')
+				continue
+			}
+			buf.WriteString(m[name])
+			i += n - 1
+		default:
+			buf.WriteByte(src[i])
 		}
-		return m[strings.Trim(s[1:], "{}")]
 	}
-	return expandVarRX.ReplaceAllStringFunc(src, repl)
+	return buf.String()
+}
+
+// varRef returns the name of the "$NAME" or "${NAME}" reference at the start
+// of s and the reference length in bytes; the length is 0 when s does not
+// start with a reference. A "$(" is never a reference, so command
+// substitution stays verbatim.
+func varRef(s string) (string, int) {
+	if len(s) > 1 && s[1] == '{' {
+		n := nameLen(s[2:])
+		if n > 0 && 2+n < len(s) && s[2+n] == '}' {
+			return s[2 : 2+n], n + 3
+		}
+		return "", 0
+	}
+	n := nameLen(s[1:])
+	if n == 0 {
+		return "", 0
+	}
+	return s[1 : 1+n], n + 1
+}
+
+// nameLen returns the length of the variable name at the start of s. Names
+// are uppercase-only by convention: .env files use SCREAMING_SNAKE_CASE keys.
+func nameLen(s string) int {
+	n := 0
+	for n < len(s) {
+		c := s[n]
+		if (c < 'A' || c > 'Z') && (c < '0' || c > '9') && c != '_' {
+			break
+		}
+		n++
+	}
+	return n
 }
 
 // isIgnoredLine returns true for empty or comment lines.
