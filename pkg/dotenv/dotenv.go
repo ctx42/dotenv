@@ -102,7 +102,7 @@ func parseValue(val string, m map[string]string) string {
 
 	first, last := val[0], val[len(val)-1]
 	isSingle := first == '\'' && last == '\''
-	isDouble := first == '"' && last == '"'
+	isDouble := first == '"' && last == '"' && !escapedAt(val, len(val)-1)
 	if isSingle || isDouble {
 		val = val[1 : len(val)-1]
 	}
@@ -116,6 +116,16 @@ func parseValue(val string, m map[string]string) string {
 		return expandVariables(val, m)
 	}
 	return val
+}
+
+// escapedAt reports whether the byte at index i of s is escaped, that is,
+// preceded by an odd number of backslashes.
+func escapedAt(s string, i int) bool {
+	n := 0
+	for i-n > 0 && s[i-n-1] == '\\' {
+		n++
+	}
+	return n%2 == 1
 }
 
 // decodeDoubleQuoted decodes a double-quoted value in one pass: it expands

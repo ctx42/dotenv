@@ -431,6 +431,13 @@ func Test_parseLine_tabular(t *testing.T) {
 		{"invalid unicode escape", `FOO="\u12"`, "FOO", "u12"},
 		{"escaped single quote", `FOO="it\'s"`, "FOO", "it's"},
 		{"lone double quote", `KEY="`, "KEY", "\""},
+		{"escaped closing double quote", `FOO="a\"`, "FOO", `"a\"`},
+		{
+			"escaped backslash before closing quote",
+			`FOO="a\\"`,
+			"FOO",
+			`a\`,
+		},
 		{
 			"value with not closed double-quote",
 			`KEY="value`,
@@ -579,6 +586,32 @@ func Test_parseLine_error_tabular(t *testing.T) {
 			assert.ErrorEqual(t, want, err)
 			assert.Equal(t, "", hKey)
 			assert.Equal(t, "", hVal)
+		})
+	}
+}
+
+func Test_escapedAt_tabular(t *testing.T) {
+	tt := []struct {
+		testN string
+
+		s    string
+		i    int
+		want bool
+	}{
+		{"first byte", `"`, 0, false},
+		{"no backslash", `a"`, 1, false},
+		{"one backslash", `a\"`, 2, true},
+		{"two backslashes", `a\\"`, 3, false},
+		{"three backslashes", `\\\"`, 3, true},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			have := escapedAt(tc.s, tc.i)
+
+			// --- Then ---
+			assert.Equal(t, tc.want, have)
 		})
 	}
 }
