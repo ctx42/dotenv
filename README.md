@@ -301,13 +301,13 @@ The public API is an independent design that differs in several key ways:
 
 - **Single entry point.** godotenv exposes many functions (`Load`, `Overload`,
   `Read`, `Write`, `Marshal`, `Unmarshal`, `Env`, `Exec`). This library
-  provides one: `Parse`.
+  provides one parsing function, `Parse`, plus the `Split` helper.
 - **`io.Reader` interface.** godotenv accepts file paths. `Parse` accepts any
   `io.Reader`, keeping I/O concerns with the caller and making the parser
   straightforward to test.
 - **Caller-owned map.** The caller passes in the destination map. This makes
-  the output container explicit, avoids hidden allocations, and enables the
-  pre-seeding pattern below.
+  the output container explicit and enables pre-seeding it (see
+  [Split](#split)).
 - **Explicit environment variable expansion.** godotenv expands OS environment
   variables automatically. Here, expansion is opt-in: pre-seed the map with
   `Split(os.Environ())` before calling `Parse`.
