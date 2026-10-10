@@ -14,6 +14,7 @@
     * [Comments](#comments)
     * [Variable Expansion](#variable-expansion)
     * [Split](#split)
+    * [Override](#override)
     * [Preventing Expansion](#preventing-expansion)
     * [Escape Characters](#escape-characters)
     * [Format Notes](#format-notes)
@@ -32,6 +33,7 @@ environment.
 - Reads from any `io.Reader`: a file, a string, or any other stream.
 - Writes into a map the caller owns, so entries can be pre-seeded.
 - Pre-seeds from the process environment with `Split(os.Environ())`.
+- Lets the environment override parsed keys with `Override`.
 - Expands `$NAME` and `${NAME}` references; single quotes keep values literal.
 - Never modifies the OS environment.
 - Depends on the Go standard library only.
@@ -56,13 +58,15 @@ import "github.com/ctx42/dotenv/pkg/dotenv"
 
 ## Usage
 
-The package has two functions: `Parse` reads dotenv-formatted content from a
-reader and stores it in a key-value map, and `Split` converts `os.Environ()`
-output into a map for pre-seeding `Parse`.
+The package has three functions: `Parse` reads dotenv-formatted content from
+a reader and stores it in a key-value map, `Split` converts `os.Environ()`
+output into a map for pre-seeding `Parse`, and `Override` replaces parsed
+values with the environment ones.
 
 ```go
 func Parse(m map[string]string, r io.Reader) error
 func Split(env []string) map[string]string
+func Override(m map[string]string, env []string) []string
 ```
 
 ### Basic
@@ -250,6 +254,43 @@ fmt.Println(dump.Any(env))
 // }
 ```
 
+### Override
+
+`Override` replaces the value of every key in the map that is also set in the
+environment, given in `os.Environ()` form, and returns the overridden keys in
+sorted order. A variable set to an empty value overrides too, and a variable
+whose key is not in the map is ignored, so the parsed file defines what the
+environment may override. Overrides apply after expansion: a value expanded
+from an overridden key keeps the file's value.
+
+<!-- gmmce:pkg/dotenv/ExampleOverride -->
+```go
+file := `
+HOST=example.com
+REPO=$HOST/team
+`
+cfg := make(map[string]string)
+if err := dotenv.Parse(cfg, strings.NewReader(file)); err != nil {
+	panic(err)
+}
+
+// Let the environment override the keys the file declares. Variables the
+// file does not declare, such as HOME, are ignored.
+keys := dotenv.Override(cfg, []string{
+	"HOME=/home/user",
+	"REPO=registry.acme.io/platform",
+})
+
+fmt.Println(keys)
+fmt.Println(dump.Any(cfg))
+// Output:
+// [REPO]
+// map[string]string{
+//   "HOST": "example.com",
+//   "REPO": "registry.acme.io/platform",
+// }
+```
+
 ### Preventing Expansion
 
 To preserve placeholders like `${}` in a value, enclose it in single quotes:
@@ -318,7 +359,8 @@ The public API is an independent design that differs in several key ways:
 
 - **Single entry point.** godotenv exposes many functions (`Load`, `Overload`,
   `Read`, `Write`, `Marshal`, `Unmarshal`, `Env`, `Exec`). This library
-  provides one parsing function, `Parse`, plus the `Split` helper.
+  provides one parsing function, `Parse`, plus the `Split` and `Override`
+  helpers.
 - **`io.Reader` interface.** godotenv accepts file paths. `Parse` accepts any
   `io.Reader`, keeping I/O concerns with the caller and making the parser
   straightforward to test.

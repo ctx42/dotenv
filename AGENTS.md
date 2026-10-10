@@ -24,7 +24,7 @@ package at `pkg/dotenv`. No `cmd/`, no sub-packages.
 
 ## Architecture
 
-The library exposes two public symbols:
+The library exposes three public symbols:
 
 - `Parse(m map[string]string, r io.Reader) error` — reads dotenv content
   from a reader into the caller-supplied map. Keys from the reader overwrite
@@ -32,6 +32,10 @@ The library exposes two public symbols:
   environment variables (see `Split`).
 - `Split(env []string) map[string]string` — converts `os.Environ()` output
   into a map suitable for passing to `Parse`.
+- `Override(m map[string]string, env []string) []string` — replaces the value
+  of every key in `m` also set in `env` and returns those keys sorted; keys
+  absent from `m` are ignored, so the parsed file defines what may be
+  overridden.
 
 Internal parsing pipeline:
 ```

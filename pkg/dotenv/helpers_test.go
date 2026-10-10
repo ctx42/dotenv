@@ -47,3 +47,56 @@ func Test_Split_tabular(t *testing.T) {
 		})
 	}
 }
+
+func Test_Override(t *testing.T) {
+	t.Run("overrides keys set in env", func(t *testing.T) {
+		// --- Given ---
+		m := map[string]string{"A": "a", "B": "b", "C": "c"}
+		env := []string{"C=env-c", "A=env-a"}
+
+		// --- When ---
+		have := Override(m, env)
+
+		// --- Then ---
+		assert.Equal(t, []string{"A", "C"}, have)
+		want := map[string]string{"A": "env-a", "B": "b", "C": "env-c"}
+		assert.Equal(t, want, m)
+	})
+
+	t.Run("empty env value overrides", func(t *testing.T) {
+		// --- Given ---
+		m := map[string]string{"A": "a"}
+		env := []string{"A="}
+
+		// --- When ---
+		have := Override(m, env)
+
+		// --- Then ---
+		assert.Equal(t, []string{"A"}, have)
+		assert.Equal(t, map[string]string{"A": ""}, m)
+	})
+
+	t.Run("env key not in map is ignored", func(t *testing.T) {
+		// --- Given ---
+		m := map[string]string{"A": "a"}
+		env := []string{"B=env-b"}
+
+		// --- When ---
+		have := Override(m, env)
+
+		// --- Then ---
+		assert.Nil(t, have)
+		assert.Equal(t, map[string]string{"A": "a"}, m)
+	})
+
+	t.Run("nil map", func(t *testing.T) {
+		// --- Given ---
+		env := []string{"A=env-a"}
+
+		// --- When ---
+		have := Override(nil, env)
+
+		// --- Then ---
+		assert.Nil(t, have)
+	})
+}

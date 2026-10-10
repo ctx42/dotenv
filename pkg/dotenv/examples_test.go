@@ -137,3 +137,30 @@ func ExampleSplit() {
 	//   "USER": "alice",
 	// }
 }
+
+func ExampleOverride() {
+	file := `
+HOST=example.com
+REPO=$HOST/team
+`
+	cfg := make(map[string]string)
+	if err := dotenv.Parse(cfg, strings.NewReader(file)); err != nil {
+		panic(err)
+	}
+
+	// Let the environment override the keys the file declares. Variables the
+	// file does not declare, such as HOME, are ignored.
+	keys := dotenv.Override(cfg, []string{
+		"HOME=/home/user",
+		"REPO=registry.acme.io/platform",
+	})
+
+	fmt.Println(keys)
+	fmt.Println(dump.Any(cfg))
+	// Output:
+	// [REPO]
+	// map[string]string{
+	//   "HOST": "example.com",
+	//   "REPO": "registry.acme.io/platform",
+	// }
+}
