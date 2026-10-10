@@ -1,3 +1,6 @@
+## v0.6.1 (Sat, 10 Oct 2026 19:09:58 UTC)
+- build(deps): update github.com/ctx42/testing to v0.57.0.
+
 ## v0.6.0 (Sat, 10 Oct 2026 08:52:02 UTC)
 - feat(dotenv): add Override to apply environment values.
 
