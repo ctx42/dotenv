@@ -1,3 +1,6 @@
+## v0.6.0 (Sat, 10 Oct 2026 08:52:02 UTC)
+- feat(dotenv): add Override to apply environment values.
+
 ## v0.5.0 (Wed, 30 Sep 2026 13:38:10 UTC)
 - fix(dotenv): only a leading quote opens a quoted value.
 - fix(dotenv): keep command substitution verbatim.
