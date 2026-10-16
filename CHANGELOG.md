@@ -1,3 +1,7 @@
+## v0.7.0 (Fri, 16 Oct 2026 13:33:50 UTC)
+- refactor(dotenv): split line scanning and splitting out of Parse.
+- feat(dotenv): add Layers to build a configuration from layered sources.
+
 ## v0.6.1 (Sat, 10 Oct 2026 19:09:58 UTC)
 - build(deps): update github.com/ctx42/testing to v0.57.0.
 
