@@ -6,6 +6,7 @@ package dotenv
 import (
 	"bufio"
 	"errors"
+	"strconv"
 	"strings"
 	"testing"
 	"testing/iotest"
@@ -291,6 +292,54 @@ func Test_Parse(t *testing.T) {
 
 		// --- Then ---
 		assert.ErrorIs(t, ErrNilMap, err)
+	})
+}
+
+func Test_scanLines(t *testing.T) {
+	t.Run("lines with numbers", func(t *testing.T) {
+		// --- Given ---
+		src := "\ufeffA=1\n\n# Comment.\n\tB=2\n"
+		var have []string
+		fn := func(n int, lin string) error {
+			have = append(have, strconv.Itoa(n)+":"+lin)
+			return nil
+		}
+
+		// --- When ---
+		err := scanLines(strings.NewReader(src), fn)
+
+		// --- Then ---
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"1:A=1", "4:\tB=2"}, have)
+	})
+
+	t.Run("error - stops at callback error", func(t *testing.T) {
+		// --- Given ---
+		var have []string
+		fn := func(n int, lin string) error {
+			have = append(have, lin)
+			return errors.New("stop")
+		}
+
+		// --- When ---
+		err := scanLines(strings.NewReader("A=1\nB=2\n"), fn)
+
+		// --- Then ---
+		assert.ErrorEqual(t, "stop", err)
+		assert.Equal(t, []string{"A=1"}, have)
+	})
+
+	t.Run("error - line too long", func(t *testing.T) {
+		// --- Given ---
+		rdr := strings.NewReader("KEY=" + strings.Repeat("a", maxLineSize))
+		fn := func(int, string) error { return nil }
+
+		// --- When ---
+		err := scanLines(rdr, fn)
+
+		// --- Then ---
+		assert.ErrorIs(t, bufio.ErrTooLong, err)
+		assert.ErrorContain(t, "dotenv: ", err)
 	})
 }
 
@@ -586,6 +635,62 @@ func Test_parseLine_error_tabular(t *testing.T) {
 			assert.ErrorEqual(t, want, err)
 			assert.Equal(t, "", hKey)
 			assert.Equal(t, "", hVal)
+		})
+	}
+}
+
+func Test_splitLine_tabular(t *testing.T) {
+	tt := []struct {
+		testN string
+
+		lin  string
+		key  string
+		want string
+	}{
+		{"unquoted", "A=x", "A", "x"},
+		{"spaces kept", "A = x ", "A", " x "},
+		{"variable not expanded", "A=$B/go", "A", "$B/go"},
+		{"quotes kept", `A="x"`, "A", `"x"`},
+		{"comment removed", "A=x # Comment.", "A", "x"},
+		{"colon separator", "A: x", "A", " x"},
+		{"exported key", "export A=x", "A", "x"},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			hKey, have, err := splitLine(1, tc.lin)
+
+			// --- Then ---
+			assert.NoError(t, err)
+			assert.Equal(t, tc.key, hKey)
+			assert.Equal(t, tc.want, have)
+		})
+	}
+}
+
+func Test_splitLine_error_tabular(t *testing.T) {
+	tt := []struct {
+		testN string
+
+		lin string
+	}{
+		{"error - no separator", "invalid"},
+		{"error - empty line", ""},
+		{"error - empty key", "=x"},
+		{"error - space in key", "A B=x"},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.testN, func(t *testing.T) {
+			// --- When ---
+			hKey, have, err := splitLine(3, tc.lin)
+
+			// --- Then ---
+			assert.ErrorIs(t, ErrInvLine, err)
+			assert.ErrorEqual(t, "dotenv: invalid config line: 3", err)
+			assert.Equal(t, "", hKey)
+			assert.Equal(t, "", have)
 		})
 	}
 }

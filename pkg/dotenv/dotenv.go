@@ -39,6 +39,20 @@ func Parse(m map[string]string, r io.Reader) error {
 	if m == nil {
 		return ErrNilMap
 	}
+	return scanLines(r, func(n int, lin string) error {
+		key, value, err := parseLine(n, lin, m)
+		if err != nil {
+			return err
+		}
+		m[key] = value
+		return nil
+	})
+}
+
+// scanLines calls fn with the number and the text of every line in r that is
+// not blank or a comment, stopping at the first error fn returns. A UTF-8 byte
+// order mark starting the first line is dropped.
+func scanLines(r io.Reader, fn func(n int, lin string) error) error {
 	scn := bufio.NewScanner(r)
 	scn.Buffer(nil, maxLineSize)
 	n := 0
@@ -52,11 +66,9 @@ func Parse(m map[string]string, r io.Reader) error {
 		if isIgnoredLine(lin) {
 			continue
 		}
-		key, value, err := parseLine(n, lin, m)
-		if err != nil {
+		if err := fn(n, lin); err != nil {
 			return err
 		}
-		m[key] = value
 	}
 	if err := scn.Err(); err != nil {
 		return fmt.Errorf("dotenv: %w", err)
@@ -64,9 +76,21 @@ func Parse(m map[string]string, r io.Reader) error {
 	return nil
 }
 
-// parseLine parses a configuration line and returns its key and value. Errors
-// report n as the line number.
+// parseLine parses a configuration line and returns its key and value,
+// expanding variable references with values from m. Errors report n as the
+// line number.
 func parseLine(n int, lin string, m map[string]string) (string, string, error) {
+	key, raw, err := splitLine(n, lin)
+	if err != nil {
+		return "", "", err
+	}
+	return key, parseValue(raw, m), nil
+}
+
+// splitLine splits a configuration line into its key and its value as
+// written, with the inline comment removed. Errors report n as the line
+// number.
+func splitLine(n int, lin string) (string, string, error) {
 	if lin == "" {
 		return "", "", fmt.Errorf("%w: %d", ErrInvLine, n)
 	}
@@ -89,8 +113,7 @@ func parseLine(n int, lin string, m map[string]string) (string, string, error) {
 	if key == "" || strings.ContainsAny(key, " \t") {
 		return "", "", fmt.Errorf("%w: %d", ErrInvLine, n)
 	}
-	val := parseValue(lin[sepIdx+1:], m)
-	return key, val, nil
+	return key, lin[sepIdx+1:], nil
 }
 
 // parseValue parses the value part of a key-value configuration line.
