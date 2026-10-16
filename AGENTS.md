@@ -24,7 +24,7 @@ package at `pkg/dotenv`. No `cmd/`, no sub-packages.
 
 ## Architecture
 
-The library exposes three public symbols:
+The library exposes three functions and one type:
 
 - `Parse(m map[string]string, r io.Reader) error` — reads dotenv content
   from a reader into the caller-supplied map. Keys from the reader overwrite
@@ -36,16 +36,23 @@ The library exposes three public symbols:
   of every key in `m` also set in `env` and returns those keys sorted; keys
   absent from `m` are ignored, so the parsed file defines what may be
   overridden.
+- `Layers` (`layers.go`) — `Read` adds a layer (base first, then overrides),
+  keeping each assignment's raw value in declaration order; `Expand(env)`
+  applies the environment and expands once, so derived values follow
+  overrides. A later layer's assignment to a declared key replaces the raw
+  value of every earlier assignment of it in place; a new key is appended.
 
 Internal parsing pipeline:
 ```
-Parse → strip UTF-8 BOM (first line only)
-      → isIgnoredLine (skip blank/comment lines)
+Parse → scanLines
+          ├─ strip UTF-8 BOM (first line only)
+          └─ isIgnoredLine (skip blank/comment lines)
       → parseLine
-          ├─ stripComment (`#` after whitespace, outside a leading quote)
-          ├─ separator: first `=` or `:`
-          ├─ extractKey (strips leading `export`); empty or whitespace key
-          │  → ErrInvLine
+          ├─ splitLine (Layers.Read calls it directly, keeping the raw value)
+          │    ├─ stripComment (`#` after whitespace, outside a leading quote)
+          │    ├─ separator: first `=` or `:`
+          │    └─ extractKey (strips leading `export`); empty or whitespace
+          │       key → ErrInvLine
           └─ parseValue
                ├─ single quotes  → raw, no escapes, no expansion
                ├─ double quotes  → decodeDoubleQuoted: escapes

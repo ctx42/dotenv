@@ -164,3 +164,40 @@ REPO=$HOST/team
 	//   "REPO": "registry.acme.io/platform",
 	// }
 }
+
+func ExampleLayers() {
+	base := `
+ROOT=/ctx42
+GOPATH=$ROOT/go
+HOST=ghcr.io
+REPO=$HOST/ctx42
+`
+	override := `
+ROOT=/acme
+`
+	var lay dotenv.Layers
+	for _, src := range []string{base, override} {
+		if err := lay.Read(strings.NewReader(src)); err != nil {
+			panic(err)
+		}
+	}
+
+	// The overrides replace values before expansion, so GOPATH follows ROOT
+	// and REPO follows HOST. Variables no layer declares, such as HOME, are
+	// ignored.
+	cfg, keys := lay.Expand([]string{
+		"HOME=/home/user",
+		"HOST=registry.acme.io",
+	})
+
+	fmt.Println(keys)
+	fmt.Println(dump.Any(cfg))
+	// Output:
+	// [HOST]
+	// map[string]string{
+	//   "GOPATH": "/acme/go",
+	//   "HOST": "registry.acme.io",
+	//   "REPO": "registry.acme.io/ctx42",
+	//   "ROOT": "/acme",
+	// }
+}

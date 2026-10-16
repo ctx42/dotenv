@@ -15,6 +15,7 @@
     * [Variable Expansion](#variable-expansion)
     * [Split](#split)
     * [Override](#override)
+    * [Layers](#layers)
     * [Preventing Expansion](#preventing-expansion)
     * [Escape Characters](#escape-characters)
     * [Format Notes](#format-notes)
@@ -34,6 +35,8 @@ environment.
 - Writes into a map the caller owns, so entries can be pre-seeded.
 - Pre-seeds from the process environment with `Split(os.Environ())`.
 - Lets the environment override parsed keys with `Override`.
+- Layers configurations with `Layers`: an override moves the values derived
+  from the key it replaces.
 - Expands `$NAME` and `${NAME}` references; single quotes keep values literal.
 - Never modifies the OS environment.
 - Depends on the Go standard library only.
@@ -58,15 +61,19 @@ import "github.com/ctx42/dotenv/pkg/dotenv"
 
 ## Usage
 
-The package has three functions: `Parse` reads dotenv-formatted content from
-a reader and stores it in a key-value map, `Split` converts `os.Environ()`
-output into a map for pre-seeding `Parse`, and `Override` replaces parsed
-values with the environment ones.
+The package has three functions and one type: `Parse` reads
+dotenv-formatted content from a reader and stores it in a key-value map,
+`Split` converts `os.Environ()` output into a map for pre-seeding `Parse`,
+`Override` replaces parsed values with the environment ones, and `Layers`
+builds a configuration from a base file, override files, and the environment.
 
 ```go
 func Parse(m map[string]string, r io.Reader) error
 func Split(env []string) map[string]string
 func Override(m map[string]string, env []string) []string
+
+func (lay *Layers) Read(r io.Reader) error
+func (lay *Layers) Expand(env []string) (map[string]string, []string)
 ```
 
 ### Basic
@@ -261,7 +268,8 @@ environment, given in `os.Environ()` form, and returns the overridden keys in
 sorted order. A variable set to an empty value overrides too, and a variable
 whose key is not in the map is ignored, so the parsed file defines what the
 environment may override. Overrides apply after expansion: a value expanded
-from an overridden key keeps the file's value.
+from an overridden key keeps the file's value. Use [Layers](#layers) to have
+it follow the override.
 
 <!-- gmmce:pkg/dotenv/ExampleOverride -->
 ```go
@@ -288,6 +296,60 @@ fmt.Println(dump.Any(cfg))
 // map[string]string{
 //   "HOST": "example.com",
 //   "REPO": "registry.acme.io/platform",
+// }
+```
+
+### Layers
+
+`Layers` builds one configuration from several sources. `Read` adds a layer:
+the first one is the base, and each later one overrides it. `Expand` takes the
+environment, given in `os.Environ()` form, as the last layer and returns the
+configuration with its variable references expanded, along with the keys the
+environment overrode in sorted order.
+
+A layer replaces the value of a key an earlier layer declares before anything
+is expanded, so a value referring to that key follows the override. A later
+file may add keys of its own; an environment variable only overrides a key
+some file declares, and its value is used as is, never expanded. A key a later
+layer sets keeps that value even when the base derives it. Values are expanded
+in declaration order, as `Parse` expands them, so a single layer with no
+environment gives the map `Parse` gives.
+
+<!-- gmmce:pkg/dotenv/ExampleLayers -->
+```go
+base := `
+ROOT=/ctx42
+GOPATH=$ROOT/go
+HOST=ghcr.io
+REPO=$HOST/ctx42
+`
+override := `
+ROOT=/acme
+`
+var lay dotenv.Layers
+for _, src := range []string{base, override} {
+	if err := lay.Read(strings.NewReader(src)); err != nil {
+		panic(err)
+	}
+}
+
+// The overrides replace values before expansion, so GOPATH follows ROOT
+// and REPO follows HOST. Variables no layer declares, such as HOME, are
+// ignored.
+cfg, keys := lay.Expand([]string{
+	"HOME=/home/user",
+	"HOST=registry.acme.io",
+})
+
+fmt.Println(keys)
+fmt.Println(dump.Any(cfg))
+// Output:
+// [HOST]
+// map[string]string{
+//   "GOPATH": "/acme/go",
+//   "HOST": "registry.acme.io",
+//   "REPO": "registry.acme.io/ctx42",
+//   "ROOT": "/acme",
 // }
 ```
 
@@ -349,7 +411,8 @@ unquoted values keep their backslashes, except that `\$` is a literal `$`.
 A line that is not a key-value pair makes `Parse` return an error wrapping
 `ErrInvLine` that names the line number, for example
 `dotenv: invalid config line: 3`. The map keeps the pairs read before that
-line. A nil map returns `ErrNilMap`.
+line. A nil map returns `ErrNilMap`. `Layers.Read` returns the same error for
+such a line and keeps the assignments read before it.
 
 ## Disclaimer
 
