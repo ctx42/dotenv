@@ -1,3 +1,7 @@
+## v0.7.1 (Sat, 17 Oct 2026 22:00:30 UTC)
+- ci: set C42_CC_RUN_ID in the workflow environment.
+- chore(deps): update dependencies.
+
 ## v0.7.0 (Fri, 16 Oct 2026 13:33:50 UTC)
 - refactor(dotenv): split line scanning and splitting out of Parse.
 - feat(dotenv): add Layers to build a configuration from layered sources.
